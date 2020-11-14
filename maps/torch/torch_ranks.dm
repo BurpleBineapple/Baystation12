@@ -138,9 +138,9 @@
 						SKILL_EVA     = SKILL_BASIC)
 
 /datum/mil_branch/fleet
-	name = "Fleet"
-	name_short = "SCGF"
-	email_domain = "torch.fleet.mil"
+	name = "NanoTrasen Expeditonary Fleet"
+	name_short = "NTEF"
+	email_domain = "dagon.nt"
 
 	rank_types = list(
 		/datum/mil_rank/fleet/e1,
@@ -183,7 +183,8 @@
 		/datum/mil_rank/fleet/o2,
 		/datum/mil_rank/fleet/o3,
 		/datum/mil_rank/fleet/o4,
-		/datum/mil_rank/fleet/o5
+		/datum/mil_rank/fleet/o5,
+		/datum/mil_rank/fleet/o6
 	)
 
 	assistant_job = /datum/job/crew
