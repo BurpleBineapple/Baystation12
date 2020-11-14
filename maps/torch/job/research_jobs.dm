@@ -13,12 +13,12 @@
 	ideal_character_age = 50
 	alt_titles = list(
 		"Research Supervisor")
-	outfit_type = /decl/hierarchy/outfit/job/torch/crew/research/senior_scientist
+	outfit_type = /decl/hierarchy/outfit/job/torch/crew/research/senior_scientist/fleet
 	allowed_branches = list(
-		/datum/mil_branch/expeditionary_corps
+		/datum/mil_branch/fleet
 	)
 	allowed_ranks = list(
-		/datum/mil_rank/ec/o1
+		/datum/mil_rank/fleet/o1
 	)
 
 	access = list(access_tox, access_tox_storage, access_maint_tunnels, access_research, access_mining_office,
@@ -64,14 +64,14 @@
 	                    SKILL_DEVICES     = SKILL_MAX,
 	                    SKILL_SCIENCE     = SKILL_MAX)
 
-	outfit_type = /decl/hierarchy/outfit/job/torch/crew/research/scientist
+	outfit_type = /decl/hierarchy/outfit/job/torch/crew/research/scientist/fleet
 	allowed_branches = list(
 		/datum/mil_branch/civilian,
 		/datum/mil_branch/solgov,
-		/datum/mil_branch/expeditionary_corps
+		/datum/mil_branch/fleet
 	)
 	allowed_ranks = list(
-		/datum/mil_rank/ec/o1,
+		/datum/mil_rank/fleet/o1,
 		/datum/mil_rank/civ/contractor = /decl/hierarchy/outfit/job/torch/passenger/research/scientist,
 		/datum/mil_rank/sol/scientist = /decl/hierarchy/outfit/job/torch/passenger/research/scientist/solgov
 	)
@@ -101,15 +101,16 @@
 		"Clerk",
 		"Field Assistant")
 
-	outfit_type = /decl/hierarchy/outfit/job/torch/crew/research
+	outfit_type = /decl/hierarchy/outfit/job/torch/crew/research/fleet
 	allowed_branches = list(
 		/datum/mil_branch/civilian,
 		/datum/mil_branch/solgov,
-		/datum/mil_branch/expeditionary_corps
+		/datum/mil_branch/fleet
 	)
 	allowed_ranks = list(
-		/datum/mil_rank/ec/e3,
-		/datum/mil_rank/ec/e5,
+		/datum/mil_rank/fleet/e3,
+		/datum/mil_rank/fleet/e4,
+		/datum/mil_rank/fleet/e5,
 		/datum/mil_rank/civ/contractor = /decl/hierarchy/outfit/job/torch/passenger/research/assist,
 		/datum/mil_rank/sol/scientist = /decl/hierarchy/outfit/job/torch/passenger/research/assist/solgov
 	)
