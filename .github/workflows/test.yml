@@ -16,7 +16,7 @@ jobs:
   DreamChecker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - name: Setup Cache
         uses: actions/cache@136d96b4aee02b1f0de3ba493b1d47135042d9c0
         with:
@@ -40,7 +40,7 @@ jobs:
   Code:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - name: Setup Cache
         uses: actions/cache@136d96b4aee02b1f0de3ba493b1d47135042d9c0
         with:
@@ -69,7 +69,7 @@ jobs:
       matrix:
         map_path: [example, torch, away_sites_testing]
     steps:
-      - uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - name: Setup Cache
         uses: actions/cache@136d96b4aee02b1f0de3ba493b1d47135042d9c0
         with:
