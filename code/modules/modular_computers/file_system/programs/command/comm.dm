@@ -41,7 +41,7 @@
 	..()
 	crew_announcement.newscast = 1
 
-/datum/nano_module/program/comm/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = GLOB.default_state)
+/datum/nano_module/program/comm/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1, datum/topic_state/state = GLOB.default_state)
 
 	var/list/data = host.initial_data()
 	var/authenticated = check_access(user, admin_access)
@@ -67,14 +67,14 @@
 	data["boss_short"] = GLOB.using_map.boss_short
 	data["authenticated"] = authenticated
 
-	var/decl/security_state/security_state = decls_repository.get_decl(GLOB.using_map.security_state)
+	var/singleton/security_state/security_state = GET_SINGLETON(GLOB.using_map.security_state)
 	data["current_security_level_ref"] = any2ref(security_state.current_security_level)
 	data["current_security_level_title"] = security_state.current_security_level.name
 
 	data["cannot_change_security_level"] = !security_state.can_change_security_level()
 	data["current_security_level_is_high_security_level"] = security_state.current_security_level == security_state.high_security_level
 	var/list/security_levels = list()
-	for(var/decl/security_level/security_level in security_state.comm_console_security_levels)
+	for(var/singleton/security_level/security_level in security_state.comm_console_security_levels)
 		var/list/security_setup = list()
 		security_setup["title"] = security_level.name
 		security_setup["ref"] = any2ref(security_level)
@@ -108,7 +108,7 @@
 		ui.set_initial_data(data)
 		ui.open()
 
-/datum/nano_module/program/comm/proc/is_authenticated(authenticated, var/mob/user)
+/datum/nano_module/program/comm/proc/is_authenticated(authenticated, mob/user)
 	if(program)
 		return program.can_run(user)
 	return TRUE
@@ -155,14 +155,14 @@
 				if(program)
 					if(is_authenticated(user) && program.computer.emagged() && !issilicon(usr) && ntn_comm)
 						if(centcomm_message_cooldown)
-							to_chat(usr, "<span class='warning'>Arrays recycling. Please stand by.</span>")
+							to_chat(usr, SPAN_WARNING("Arrays recycling. Please stand by."))
 							SSnano.update_uis(src)
 							return
 						var/input = sanitize(input(usr, "Please choose a message to transmit to \[ABNORMAL ROUTING CORDINATES\] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination. Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", "") as null|text)
 						if(!input || !can_still_topic())
 							return
 						Syndicate_announce(input, usr)
-						to_chat(usr, "<span class='notice'>Message transmitted.</span>")
+						to_chat(usr, SPAN_NOTICE("Message transmitted."))
 						log_say("[key_name(usr)] has made an illegal announcement: [input]")
 						centcomm_message_cooldown = 1
 						spawn(300)//30 second cooldown
@@ -170,17 +170,17 @@
 			else if(href_list["target"] == "regular")
 				if(is_authenticated(user) && !issilicon(usr) && ntn_comm)
 					if(centcomm_message_cooldown)
-						to_chat(usr, "<span class='warning'>Arrays recycling. Please stand by.</span>")
+						to_chat(usr, SPAN_WARNING("Arrays recycling. Please stand by."))
 						SSnano.update_uis(src)
 						return
 					if(!is_relay_online())//Contact Centcom has a check, Syndie doesn't to allow for Traitor funs.
-						to_chat(usr, "<span class='warning'>No Emergency Bluespace Relay detected. Unable to transmit message.</span>")
+						to_chat(usr, SPAN_WARNING("No Emergency Bluespace Relay detected. Unable to transmit message."))
 						return
 					var/input = sanitize(input("Please choose a message to transmit to [GLOB.using_map.boss_short] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination.  Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", "") as null|text)
 					if(!input || !can_still_topic())
 						return
 					Centcomm_announce(input, usr)
-					to_chat(usr, "<span class='notice'>Message transmitted.</span>")
+					to_chat(usr, SPAN_NOTICE("Message transmitted."))
 					log_say("[key_name(usr)] has made an IA [GLOB.using_map.boss_short] announcement: [input]")
 					centcomm_message_cooldown = 1
 					spawn(300) //30 second cooldown
@@ -219,8 +219,8 @@
 		if("setalert")
 			. = TOPIC_HANDLED
 			if(is_authenticated(user) && !issilicon(usr) && ntn_cont && ntn_comm)
-				var/decl/security_state/security_state = decls_repository.get_decl(GLOB.using_map.security_state)
-				var/decl/security_level/target_level = locate(href_list["target"]) in security_state.comm_console_security_levels
+				var/singleton/security_state/security_state = GET_SINGLETON(GLOB.using_map.security_state)
+				var/singleton/security_level/target_level = locate(href_list["target"]) in security_state.comm_console_security_levels
 				if(target_level && security_state.can_switch_to(target_level))
 					var/confirm = alert("Are you sure you want to change the alert level to [target_level.name]?", name, "No", "Yes")
 					if(confirm == "Yes" && can_still_topic())
@@ -246,13 +246,13 @@
 			. = TOPIC_HANDLED
 			if(is_authenticated(user) && ntn_comm)
 				if(!program.computer.print_paper(current_viewing_message["contents"],current_viewing_message["title"]))
-					to_chat(usr, "<span class='notice'>Hardware Error: Printer was unable to print the selected file.</span>")
+					to_chat(usr, SPAN_NOTICE("Hardware Error: Printer was unable to print the selected file."))
 		if("unbolt_doors")
 			GLOB.using_map.unbolt_saferooms()
-			to_chat(usr, "<span class='notice'>The console beeps, confirming the signal was sent to have the saferooms unbolted.</span>")
+			to_chat(usr, SPAN_NOTICE("The console beeps, confirming the signal was sent to have the saferooms unbolted."))
 		if("bolt_doors")
 			GLOB.using_map.bolt_saferooms()
-			to_chat(usr, "<span class='notice'>The console beeps, confirming the signal was sent to have the saferooms bolted.</span>")
+			to_chat(usr, SPAN_NOTICE("The console beeps, confirming the signal was sent to have the saferooms bolted."))
 		if("toggle_alert_border")
 			. = TOPIC_HANDLED
 			if(is_authenticated(user) && ntn_comm)
@@ -267,15 +267,15 @@
 /*
 General message handling stuff
 */
-var/list/comm_message_listeners = list() //We first have to initialize list then we can use it.
-var/datum/comm_message_listener/global_message_listener = new //May be used by admins
-var/last_message_id = 0
+var/global/list/comm_message_listeners = list() //We first have to initialize list then we can use it.
+var/global/datum/comm_message_listener/global_message_listener = new //May be used by admins
+var/global/last_message_id = 0
 
 /proc/get_comm_message_id()
 	last_message_id = last_message_id + 1
 	return last_message_id
 
-/proc/post_comm_message(var/message_title, var/message_text)
+/proc/post_comm_message(message_title, message_text)
 	var/list/message = list()
 	message["id"] = get_comm_message_id()
 	message["title"] = message_title
@@ -292,13 +292,13 @@ var/last_message_id = 0
 	messages = list()
 	comm_message_listeners.Add(src)
 
-/datum/comm_message_listener/proc/Add(var/list/message)
+/datum/comm_message_listener/proc/Add(list/message)
 	messages[++messages.len] = message
 
-/datum/comm_message_listener/proc/Remove(var/list/message)
+/datum/comm_message_listener/proc/Remove(list/message)
 	messages -= list(message)
 
-/proc/post_status(var/command, var/data1, var/data2)
+/proc/post_status(command, data1, data2)
 
 	var/datum/radio_frequency/frequency = radio_controller.return_frequency(1435)
 
@@ -319,7 +319,7 @@ var/last_message_id = 0
 			status_signal.data["toggle_alert_border"] = TRUE
 	frequency.post_signal(signal = status_signal)
 
-/proc/cancel_call_proc(var/mob/user)
+/proc/cancel_call_proc(mob/user)
 	if (!evacuation_controller)
 		return
 
@@ -331,11 +331,11 @@ var/last_message_id = 0
 
 /proc/is_relay_online()
 	for(var/obj/machinery/bluespacerelay/M in SSmachines.machinery)
-		if(M.stat == 0)
+		if(M.stat == EMPTY_BITFIELD)
 			return 1
 	return 0
 
-/proc/call_shuttle_proc(var/mob/user, var/emergency)
+/proc/call_shuttle_proc(mob/user, emergency)
 	if (!evacuation_controller)
 		return
 
@@ -343,7 +343,7 @@ var/last_message_id = 0
 		emergency = 1
 
 	if(!GLOB.universe.OnShuttleCall(usr))
-		to_chat(user, "<span class='notice'>Cannot establish a bluespace connection.</span>")
+		to_chat(user, SPAN_NOTICE("Cannot establish a bluespace connection."))
 		return
 
 	if(GLOB.deathsquad.deployed)

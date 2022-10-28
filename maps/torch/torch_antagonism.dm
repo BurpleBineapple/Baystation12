@@ -27,7 +27,7 @@
 	var/sic //Second-In-Command
 	leader_welcome_text = "As leader of the Emergency Response Team, you are part of the Sol Central Government Fleet, and are there with the intention of restoring normal operation to the vessel or the safe evacuation of crew and passengers. You should, to this effect, aid the Commanding Officer or ranking officer aboard in their endeavours to achieve this."
 
-/datum/antagonist/ert/equip(var/mob/living/carbon/human/player)
+/datum/antagonist/ert/equip(mob/living/carbon/human/player)
 
 	if(!..())
 		return 0
@@ -43,7 +43,7 @@
 	else
 		player.char_rank = GLOB.mil_branches.get_rank("Fleet", "Petty Officer First Class")
 
-	var/decl/hierarchy/outfit/ert_outfit = outfit_by_type((player.mind == leader) ? /decl/hierarchy/outfit/job/torch/ert/leader : /decl/hierarchy/outfit/job/torch/ert)
+	var/singleton/hierarchy/outfit/ert_outfit = outfit_by_type((player.mind == leader) ? /singleton/hierarchy/outfit/job/torch/ert/leader : /singleton/hierarchy/outfit/job/torch/ert)
 	ert_outfit.equip(player)
 
 	if(player.char_rank && player.char_rank.accessory)

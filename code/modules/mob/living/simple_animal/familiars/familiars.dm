@@ -67,7 +67,7 @@
 
 	wizardy_spells = list(/spell/aoe_turf/conjure/forcewall)
 
-/mob/living/simple_animal/familiar/pike/Allow_Spacemove(var/check_drift = 0)
+/mob/living/simple_animal/familiar/pike/Allow_Spacemove(check_drift = 0)
 	return 1	//No drifting in space for space carp!	//original comments do not steal
 
 /mob/living/simple_animal/familiar/horror
@@ -90,7 +90,7 @@
 /obj/item/natural_weapon/horror
 	name = "foul touch"
 	force = 10
-	damtype = BURN
+	damtype = DAMAGE_BURN
 	attack_verb = list("touched")
 
 /mob/living/simple_animal/familiar/horror/death(gibbed, deathmessage, show_dead_message)

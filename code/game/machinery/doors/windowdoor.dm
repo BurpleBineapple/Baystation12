@@ -10,7 +10,7 @@
 	health = 150
 	visible = 0.0
 	use_power = POWER_USE_OFF
-	stat_immune = NOSCREEN | NOINPUT | NOPOWER
+	stat_immune = MACHINE_STAT_NOSCREEN | MACHINE_STAT_NOINPUT | MACHINE_STAT_NOPOWER
 	uncreated_component_parts = null
 	atom_flags = ATOM_FLAG_NO_TEMP_CHANGE | ATOM_FLAG_CHECKS_BORDER
 	opacity = 0
@@ -45,7 +45,7 @@
 	else
 		icon_state = "[base_state]open"
 
-/obj/machinery/door/window/proc/shatter(var/display_message = 1)
+/obj/machinery/door/window/proc/shatter(display_message = 1)
 	new /obj/item/material/shard(src.loc)
 	var/obj/item/stack/cable_coil/CC = new /obj/item/stack/cable_coil(src.loc)
 	CC.amount = 2
@@ -64,7 +64,7 @@
 		visible_message("[src] shatters!")
 	qdel(src)
 
-/obj/machinery/door/window/deconstruct(mob/user, var/moved = FALSE)
+/obj/machinery/door/window/deconstruct(mob/user, moved = FALSE)
 	shatter()
 
 /obj/machinery/door/window/Destroy()
@@ -149,7 +149,7 @@
 /obj/machinery/door/window/proc/close_final()
 	operating = 0
 
-/obj/machinery/door/window/take_damage(var/damage)
+/obj/machinery/door/window/take_damage(damage)
 	src.health = max(0, src.health - damage)
 	if (src.health <= 0)
 		shatter()
@@ -160,11 +160,11 @@
 		var/mob/living/carbon/human/H = user
 		if(H.species.can_shred(H))
 			playsound(src.loc, 'sound/effects/Glasshit.ogg', 75, 1)
-			visible_message("<span class='danger'>[user] smashes against the [src.name].</span>", 1)
+			visible_message(SPAN_DANGER("[user] smashes against the [src.name]."), 1)
 			take_damage(25)
 			return TRUE
 
-/obj/machinery/door/window/emag_act(var/remaining_charges, var/mob/user)
+/obj/machinery/door/window/emag_act(remaining_charges, mob/user)
 	if (emagged)
 		to_chat(user, SPAN_WARNING("\The [src] has already been locked open."))
 		return FALSE
@@ -180,13 +180,13 @@
 		addtimer(CALLBACK(src, .proc/open), 6, TIMER_UNIQUE | TIMER_OVERRIDE)
 	return TRUE
 
-/obj/machinery/door/emp_act(severity)
+/obj/machinery/door/window/emp_act(severity)
 	if(prob(20/severity))
 		spawn(0)
 			open()
 	..()
 
-/obj/machinery/door/window/CanFluidPass(var/coming_from)
+/obj/machinery/door/window/CanFluidPass(coming_from)
 	return !density || ((dir in GLOB.cardinal) && coming_from != dir)
 
 /obj/machinery/door/window/attackby(obj/item/I as obj, mob/user as mob)
@@ -203,15 +203,15 @@
 			spark_system.start()
 			playsound(src.loc, "sparks", 50, 1)
 			playsound(src.loc, 'sound/weapons/blade1.ogg', 50, 1)
-			visible_message("<span class='warning'>The glass door was sliced open by [user]!</span>")
+			visible_message(SPAN_WARNING("The glass door was sliced open by [user]!"))
 		return 1
 
 	//If it's emagged, crowbar can pry electronics out.
 	if (src.operating == -1 && isCrowbar(I))
 		playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
 		user.visible_message("[user] removes the electronics from the windoor.", "You start to remove electronics from the windoor.")
-		if (do_after(user,40,src))
-			to_chat(user, "<span class='notice'>You removed the windoor electronics!</span>")
+		if (do_after(user, 4 SECONDS, src, DO_REPAIR_CONSTRUCT))
+			to_chat(user, SPAN_NOTICE("You removed the windoor electronics!"))
 
 			var/obj/structure/windoor_assembly/wa = new/obj/structure/windoor_assembly(src.loc)
 			if (istype(src, /obj/machinery/door/window/brigdoor))
@@ -246,7 +246,7 @@
 	else if (src.density)
 		flick(text("[]deny", src.base_state), src)
 
-/obj/machinery/door/window/create_electronics(var/electronics_type = /obj/item/airlock_electronics)
+/obj/machinery/door/window/create_electronics(electronics_type = /obj/item/airlock_electronics)
 	electronics = ..()
 	return electronics
 

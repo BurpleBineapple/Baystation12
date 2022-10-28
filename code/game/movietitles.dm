@@ -5,8 +5,7 @@
 
 GLOBAL_LIST(end_titles)
 
-client
-	var/list/credits
+/client/var/list/credits
 
 /client/proc/RollCredits()
 	set waitfor = FALSE
@@ -85,11 +84,10 @@ client
 	parent.screen += src
 
 /obj/screen/credit/Destroy()
-	var/client/P = parent
 	if(parent)
-		P.screen -= src
-	LAZYREMOVE(P.credits, src)
-	parent = null
+		parent.screen -= src
+		LAZYREMOVE(parent.credits, src)
+		parent = null
 	return ..()
 
 /proc/generate_titles()
@@ -114,7 +112,7 @@ client
 	else
 		titles += "<center><h1>EPISODE [rand(1,1000)]<br>[GLOB.end_credits_title]<h1></h1></h1></center>"
 
-	for(var/mob/living/carbon/human/H in GLOB.living_mob_list_|GLOB.dead_mob_list_)
+	for(var/mob/living/carbon/human/H in GLOB.alive_mobs|GLOB.dead_mobs)
 		if(findtext(H.real_name,"(mannequin)"))
 			continue
 		if(H.is_species(SPECIES_MONKEY) && findtext(H.real_name,"[lowertext(H.species.name)]")) //no monki
@@ -136,7 +134,7 @@ client
 		if(H.ckey && H.client)
 			if(H.client.get_preference_value(/datum/client_preference/show_ckey_credits) == GLOB.PREF_SHOW)
 				showckey = 1
-		var/decl/cultural_info/actor_culture = SSculture.get_culture(H.get_cultural_value(TAG_CULTURE))
+		var/singleton/cultural_info/actor_culture = SSculture.get_culture(H.get_cultural_value(TAG_CULTURE))
 		if(!actor_culture || !(H.species.spawn_flags & SPECIES_CAN_JOIN) || prob(10))
 			actor_culture = SSculture.get_culture(CULTURE_HUMAN)
 		if(!showckey)
@@ -159,7 +157,7 @@ client
 
 	var/list/corpses = list()
 	var/list/monkies = list()
-	for(var/mob/living/carbon/human/H in GLOB.dead_mob_list_)
+	for(var/mob/living/carbon/human/H in GLOB.dead_mobs)
 		if(H.timeofdeath < 5 MINUTES) //no prespawned corpses
 			continue
 		if(H.is_species(SPECIES_MONKEY) && findtext(H.real_name,"[lowertext(H.species.name)]"))
@@ -173,13 +171,14 @@ client
 		titles += "<center>BASED ON REAL EVENTS<br>In memory of [english_list(corpses)].</center>"
 
 	var/list/staff = list("PRODUCTION STAFF:")
-	var/list/staffjobs = list("Coffe Fetcher", "Cameraman", "Angry Yeller", "Chair Operator", "Choreographer", "Historical Consultant", "Costume Designer", "Chief Editor", "Executive Assistant")
+	var/list/staffjobs = list("Coffee Fetcher", "Cameraman", "Angry Yeller", "Chair Operator", "Choreographer", "Historical Consultant", "Costume Designer", "Chief Editor", "Executive Assistant")
 	var/list/goodboys = list()
 	for(var/client/C)
-		if(!C.holder)
+		if(!C.holder || C.is_stealthed())
 			continue
+
 		if(C.holder.rights & (R_DEBUG|R_ADMIN))
-			var/decl/cultural_info/cult = SSculture.cultural_info_by_name[pick(SSculture.cultural_info_by_name)]
+			var/singleton/cultural_info/cult = SSculture.cultural_info_by_name[pick(SSculture.cultural_info_by_name)]
 			staff += "[uppertext(pick(staffjobs))] - [cult.get_random_name(pick(MALE, FEMALE))] a.k.a. '[C.key]'"
 		else if(C.holder.rights & R_MOD)
 			goodboys += "[C.key]"

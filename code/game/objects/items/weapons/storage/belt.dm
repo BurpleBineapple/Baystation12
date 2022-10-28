@@ -118,7 +118,7 @@
 		/obj/item/device/t_scanner,
 		/obj/item/device/scanner/gas,
 		/obj/item/taperoll/engineering,
-		/obj/item/inducer/,
+		/obj/item/inducer,
 		/obj/item/device/robotanalyzer,
 		/obj/item/material/minihoe,
 		/obj/item/material/hatchet,
@@ -131,7 +131,7 @@
 		/obj/item/clothing/gloves,
 		/obj/item/tape_roll,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding
 		)
 
 
@@ -188,7 +188,7 @@
 		/obj/item/bodybag,
 		/obj/item/clothing/gloves,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding
 		)
 
 /obj/item/storage/belt/medical/emt
@@ -213,7 +213,7 @@
 		/obj/item/clothing/glasses,
 		/obj/item/ammo_casing/shotgun,
 		/obj/item/ammo_magazine,
-		/obj/item/reagent_containers/food/snacks/donut/,
+		/obj/item/reagent_containers/food/snacks/donut,
 		/obj/item/melee/baton,
 		/obj/item/melee/telebaton,
 		/obj/item/flame/lighter,
@@ -229,7 +229,7 @@
 		/obj/item/device/binoculars,
 		/obj/item/clothing/gloves,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding
 		)
 
 /obj/item/storage/belt/holster/security/full/Initialize()
@@ -255,7 +255,7 @@
 		/obj/item/clothing/glasses,
 		/obj/item/ammo_casing/shotgun,
 		/obj/item/ammo_magazine,
-		/obj/item/reagent_containers/food/snacks/donut/,
+		/obj/item/reagent_containers/food/snacks/donut,
 		/obj/item/melee/baton,
 		/obj/item/melee/telebaton,
 		/obj/item/flame/lighter,
@@ -271,7 +271,7 @@
 		/obj/item/device/binoculars,
 		/obj/item/clothing/gloves,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding
 		)
 
 /obj/item/storage/belt/general
@@ -329,13 +329,14 @@
 		/obj/item/device/flashlight,
 		/obj/item/reagent_containers/spray/cleaner,
 		/obj/item/soap,
+		/obj/item/reagent_containers/glass/rag,
 		/obj/item/holosign_creator,
 		/obj/item/clothing/gloves,
 		/obj/item/device/assembly/mousetrap,
 		/obj/item/crowbar/prybar,
 		/obj/item/clothing/mask/plunger,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding
 		)
 
 /obj/item/storage/belt/holster/general
@@ -399,10 +400,11 @@
 		/obj/item/sample/fibers,
 		/obj/item/device/taperecorder,
 		/obj/item/device/tape,
-		/obj/item/clothing/gloves/latex,
-		/obj/item/clothing/gloves/forensic,
+		/obj/item/clothing/gloves,
 		/obj/item/folder,
 		/obj/item/paper,
+		/obj/item/photo,
+		/obj/item/paper_bundle,
 		/obj/item/forensics/sample_kit,
 		/obj/item/device/camera,
 		/obj/item/device/taperecorder,
@@ -410,7 +412,8 @@
 		/obj/item/storage/csi_markers,
 		/obj/item/device/scanner,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding,
+		/obj/item/modular_computer/tablet
 		)
 
 /obj/item/storage/belt/forensic
@@ -428,10 +431,11 @@
 		/obj/item/sample/fibers,
 		/obj/item/device/taperecorder,
 		/obj/item/device/tape,
-		/obj/item/clothing/gloves/latex,
-		/obj/item/clothing/gloves/forensic,
+		/obj/item/clothing/gloves,
 		/obj/item/folder,
 		/obj/item/paper,
+		/obj/item/photo,
+		/obj/item/paper_bundle,
 		/obj/item/forensics/sample_kit,
 		/obj/item/device/camera,
 		/obj/item/device/taperecorder,
@@ -439,7 +443,8 @@
 		/obj/item/storage/csi_markers,
 		/obj/item/device/scanner,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/
+		/obj/item/material/knife/folding,
+		/obj/item/modular_computer/tablet
 		)
 
 /obj/item/storage/belt/holster/machete
@@ -471,7 +476,7 @@
 		/obj/item/clothing/gloves,
 		/obj/item/tape_roll,
 		/obj/item/clothing/head/beret,
-		/obj/item/material/knife/folding/,
+		/obj/item/material/knife/folding,
 		/obj/item/storage/firstaid/light,
 		/obj/item/device/flash
 		)

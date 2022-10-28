@@ -9,6 +9,7 @@
 	response_help  = "pats"
 	response_disarm = "gently nudges"
 	response_harm   = "strikes"
+	meat_type = /obj/item/reagent_containers/food/snacks/shellfish/crab
 	meat_amount = 12
 	can_escape = TRUE //snip snip
 	break_stuff_probability = 15
@@ -44,9 +45,8 @@
 
 /mob/living/simple_animal/hostile/retaliate/giant_crab/Initialize() //embiggen
 	. = ..()
-	var/matrix/M = new
-	M.Scale(1.5)
-	transform = M
+	SetTransform(scale = 1.5)
+
 
 /mob/living/simple_animal/hostile/retaliate/giant_crab/Destroy()
 	. = ..()
@@ -54,7 +54,7 @@
 
 /mob/living/simple_animal/hostile/retaliate/giant_crab/attack_hand(mob/living/carbon/human/H)
 	. = ..()
-	reflect_unarmed_damage(H, BRUTE, "armoured carapace")
+	reflect_unarmed_damage(H, DAMAGE_BRUTE, "armoured carapace")
 
 /mob/living/simple_animal/hostile/retaliate/giant_crab/Life()
 	. = ..()
@@ -69,7 +69,7 @@
 			release_grab()
 		ai_holder.attackers = list() //TODO: does this still work?
 		ai_holder.lose_target()
-		visible_message("<span class='notice'>\The [src] lowers its pincer.</span>")
+		visible_message(SPAN_NOTICE("\The [src] lowers its pincer."))
 
 /mob/living/simple_animal/hostile/retaliate/giant_crab/can_special_attack(mob/living/carbon/human/H)
 	. = ..()
@@ -85,7 +85,7 @@
 			release_grab()
 			return
 		visible_message(SPAN_DANGER("\The [src] [pick(grab_desc)] \the [victim] in its pincer!"))
-		victim.apply_damage(grab_damage, BRUTE, BP_CHEST, DAM_EDGE, used_weapon = "crab's pincer")
+		victim.apply_damage(grab_damage, DAMAGE_BRUTE, BP_CHEST, DAMAGE_FLAG_EDGE, used_weapon = "crab's pincer")
 
 /mob/living/simple_animal/hostile/retaliate/giant_crab/proc/release_grab()
 	if(victim)

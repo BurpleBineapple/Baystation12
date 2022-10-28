@@ -77,7 +77,7 @@
 		computer.update_host_icon()
 		return
 
-/datum/computer_file/program/proc/is_supported_by_hardware(var/hardware_flag)
+/datum/computer_file/program/proc/is_supported_by_hardware(hardware_flag)
 	if(!(hardware_flag & usage_flags))
 		return FALSE
 	return TRUE
@@ -112,13 +112,13 @@
 	var/obj/item/card/id/I = user.GetIdCard()
 	if(!I)
 		if(loud)
-			to_chat(user, "<span class='notice'>\The [computer] flashes an \"RFID Error - Unable to scan ID\" warning.</span>")
+			to_chat(user, SPAN_NOTICE("\The [computer] flashes an \"RFID Error - Unable to scan ID\" warning."))
 		return FALSE
 
 	if(access_to_check in I.access)
 		return TRUE
 	else if(loud)
-		to_chat(user, "<span class='notice'>\The [computer] flashes an \"Access Denied\" warning.</span>")
+		to_chat(user, SPAN_NOTICE("\The [computer] flashes an \"Access Denied\" warning."))
 
 /// This attempts to retrieve header data for NanoUIs. If implementing completely new device of different type than existing ones, always include the device here in this proc. This proc basically relays the request to whatever is running the program.
 /datum/computer_file/program/proc/get_header_data()
@@ -149,7 +149,7 @@
 	return TRUE
 
 /// This is called every tick when the program is enabled. Ensure you do parent call if you override it. If parent returns TRUE continue with UI initialisation. It returns FALSE if it can't run or if NanoModule was used instead. I suggest using NanoModules where applicable.
-/datum/computer_file/program/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/datum/computer_file/program/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	if(program_state != PROGRAM_STATE_ACTIVE) // Our program was closed. Close the ui if it exists.
 		if(ui)
 			ui.close()
@@ -174,7 +174,7 @@
 		return computer.Topic(href, href_list)
 
 /// Relays the call to nano module, if we have one
-/datum/computer_file/program/proc/check_eye(var/mob/user)
+/datum/computer_file/program/proc/check_eye(mob/user)
 	if(NM)
 		return NM.check_eye(user)
 	else

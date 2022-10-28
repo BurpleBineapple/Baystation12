@@ -14,7 +14,7 @@
 	clicksound = "button"
 	clickvol = 40
 	base_type = /obj/machinery/vending/assist
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 
 	machine_name = "vending machine"
@@ -122,14 +122,14 @@
 
 /obj/machinery/vending/ex_act(severity)
 	switch(severity)
-		if(1.0)
+		if(EX_ACT_DEVASTATING)
 			qdel(src)
 			return
-		if(2.0)
+		if(EX_ACT_HEAVY)
 			if (prob(50))
 				qdel(src)
 				return
-		if(3.0)
+		if(EX_ACT_LIGHT)
 			if (prob(25))
 				spawn(0)
 					src.malfunction()
@@ -138,7 +138,7 @@
 		else
 	return
 
-/obj/machinery/vending/emag_act(var/remaining_charges, var/mob/user)
+/obj/machinery/vending/emag_act(remaining_charges, mob/user)
 	if (!emagged)
 		emagged = TRUE
 		wires.CutWireIndex(VENDING_WIRE_CONTRABAND, FALSE)
@@ -186,7 +186,7 @@
 			return FALSE
 		coin = W
 		categories |= CAT_COIN
-		to_chat(user, "<span class='notice'>You insert \the [W] into \the [src].</span>")
+		to_chat(user, SPAN_NOTICE("You insert \the [W] into \the [src]."))
 		SSnano.update_uis(src)
 		return TRUE
 	if((user.a_intent == I_HELP) && attempt_to_stock(W, user))
@@ -198,16 +198,16 @@
 		power_change()
 		return
 
-/obj/machinery/vending/state_transition(decl/machine_construction/new_state)
+/obj/machinery/vending/state_transition(singleton/machine_construction/new_state)
 	. = ..()
 	SSnano.update_uis(src)
 
-/obj/machinery/vending/MouseDrop_T(var/obj/item/I as obj, var/mob/user as mob)
+/obj/machinery/vending/MouseDrop_T(obj/item/I as obj, mob/user as mob)
 	if(!CanMouseDrop(I, user) || (I.loc != user))
 		return
 	return attempt_to_stock(I, user)
 
-/obj/machinery/vending/proc/attempt_to_stock(var/obj/item/I as obj, var/mob/user as mob)
+/obj/machinery/vending/proc/attempt_to_stock(obj/item/I as obj, mob/user as mob)
 	for(var/datum/stored_items/vending_products/R in product_records)
 		if(I.type == R.item_path)
 			stock(I, R, user)
@@ -216,14 +216,14 @@
 /**
  *  Receive payment with cashmoney.
  */
-/obj/machinery/vending/proc/pay_with_cash(var/obj/item/spacecash/bundle/cashmoney)
+/obj/machinery/vending/proc/pay_with_cash(obj/item/spacecash/bundle/cashmoney)
 	if(currently_vending.price > cashmoney.worth)
 		// This is not a status display message, since it's something the character
 		// themselves is meant to see BEFORE putting the money in
-		to_chat(usr, "[icon2html(cashmoney, usr)] <span class='warning'>That is not enough money.</span>")
+		to_chat(usr, "[icon2html(cashmoney, usr)] [SPAN_WARNING("That is not enough money.")]")
 		return 0
 
-	visible_message("<span class='info'>\The [usr] inserts some cash into \the [src].</span>")
+	visible_message(SPAN_INFO("\The [usr] inserts some cash into \the [src]."))
 	cashmoney.worth -= currently_vending.price
 
 	if(cashmoney.worth <= 0)
@@ -241,8 +241,8 @@
  * Takes payment for whatever is the currently_vending item. Returns 1 if
  * successful, 0 if failed.
  */
-/obj/machinery/vending/proc/pay_with_ewallet(var/obj/item/spacecash/ewallet/wallet)
-	visible_message("<span class='info'>\The [usr] swipes \the [wallet] through \the [src].</span>")
+/obj/machinery/vending/proc/pay_with_ewallet(obj/item/spacecash/ewallet/wallet)
+	visible_message(SPAN_INFO("\The [usr] swipes \the [wallet] through \the [src]."))
 	if(currently_vending.price > wallet.worth)
 		src.status_message = "Insufficient funds on chargecard."
 		src.status_error = 1
@@ -258,11 +258,11 @@
  * Takes payment for whatever is the currently_vending item. Returns 1 if
  * successful, 0 if failed
  */
-/obj/machinery/vending/proc/pay_with_card(var/obj/item/card/id/I, var/obj/item/ID_container)
+/obj/machinery/vending/proc/pay_with_card(obj/item/card/id/I, obj/item/ID_container)
 	if(I==ID_container || ID_container == null)
-		visible_message("<span class='info'>\The [usr] swipes \the [I] through \the [src].</span>")
+		visible_message(SPAN_INFO("\The [usr] swipes \the [I] through \the [src]."))
 	else
-		visible_message("<span class='info'>\The [usr] swipes \the [ID_container] through \the [src].</span>")
+		visible_message(SPAN_INFO("\The [usr] swipes \the [ID_container] through \the [src]."))
 	var/datum/money_account/customer_account = get_account(I.associated_account_number)
 	if (!customer_account)
 		src.status_message = "Error: Unable to access account. Please contact technical support if problem persists."
@@ -300,7 +300,7 @@
  *
  *  Called after the money has already been taken from the customer.
  */
-/obj/machinery/vending/proc/credit_purchase(var/target as text)
+/obj/machinery/vending/proc/credit_purchase(target as text)
 	vendor_account.deposit(currently_vending.price, "Purchase of [currently_vending.item_name]", target)
 
 /obj/machinery/vending/physical_attack_hand(mob/user)
@@ -317,7 +317,7 @@
  *
  *  See NanoUI documentation for details.
  */
-/obj/machinery/vending/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/vending/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	user.set_machine(src)
 
 	var/list/data = list()
@@ -371,7 +371,7 @@
 		coin.dropInto(loc)
 		if(!user.get_active_hand())
 			user.put_in_hands(coin)
-		to_chat(user, "<span class='notice'>You remove \the [coin] from \the [src]</span>")
+		to_chat(user, SPAN_NOTICE("You remove \the [coin] from \the [src]"))
 		coin = null
 		categories &= ~CAT_COIN
 		return TOPIC_HANDLED
@@ -391,7 +391,7 @@
 		if(R.price <= 0)
 			vend(R, user)
 		else if(istype(user,/mob/living/silicon)) //If the item is not free, provide feedback if a synth is trying to buy something.
-			to_chat(user, "<span class='danger'>Artificial unit recognized.  Artificial units cannot complete this transaction.  Purchase canceled.</span>")
+			to_chat(user, SPAN_DANGER("Artificial unit recognized.  Artificial units cannot complete this transaction.  Purchase canceled."))
 		else
 			currently_vending = R
 			if(!vendor_account || vendor_account.suspended)
@@ -415,9 +415,9 @@
 		return list()
 	return ..()
 
-/obj/machinery/vending/proc/vend(var/datum/stored_items/vending_products/R, mob/user)
+/obj/machinery/vending/proc/vend(datum/stored_items/vending_products/R, mob/user)
 	if((!allowed(user)) && !emagged && scan_id)	//For SECURE VENDING MACHINES YEAH
-		to_chat(user, "<span class='warning'>Access denied.</span>")//Unless emagged of course
+		to_chat(user, SPAN_WARNING("Access denied."))//Unless emagged of course
 		flick(src.icon_deny,src)
 		return
 	src.vend_ready = 0 //One thing at a time!!
@@ -427,13 +427,13 @@
 
 	if (R.category & CAT_COIN)
 		if(!coin)
-			to_chat(user, "<span class='notice'>You need to insert a coin to get this item.</span>")
+			to_chat(user, SPAN_NOTICE("You need to insert a coin to get this item."))
 			return
-		if(!isnull(coin.string_colour))
+		if(!isnull(coin.string_color))
 			if(prob(50))
-				to_chat(user, "<span class='notice'>You successfully pull the coin out before \the [src] could swallow it.</span>")
+				to_chat(user, SPAN_NOTICE("You successfully pull the coin out before \the [src] could swallow it."))
 			else
-				to_chat(user, "<span class='notice'>You weren't able to pull the coin out fast enough, the machine ate it, string and all.</span>")
+				to_chat(user, SPAN_NOTICE("You weren't able to pull the coin out fast enough, the machine ate it, string and all."))
 				qdel(coin)
 				coin = null
 				categories &= ~CAT_COIN
@@ -454,7 +454,7 @@
 		if(prob(diona_spawn_chance)) //Hehehe
 			var/turf/T = get_turf(src)
 			var/mob/living/carbon/alien/diona/S = new(T)
-			src.visible_message("<span class='notice'>\The [src] makes an odd grinding noise before coming to a halt as \a [S.name] slurmps out from the receptacle.</span>")
+			src.visible_message(SPAN_NOTICE("\The [src] makes an odd grinding noise before coming to a halt as \a [S.name] slurmps out from the receptacle."))
 		else //Just a normal vend, then
 			R.get_product(get_turf(src))
 			src.visible_message("\The [src] clunks as it vends \the [R.item_name].")
@@ -462,7 +462,7 @@
 			if(prob(1)) //The vending gods look favorably upon you
 				sleep(3)
 				if(R.get_product(get_turf(src)))
-					src.visible_message("<span class='notice'>\The [src] clunks as it vends an additional [R.item_name].</span>")
+					src.visible_message(SPAN_NOTICE("\The [src] clunks as it vends an additional [R.item_name]."))
 
 		src.status_message = ""
 		src.status_error = 0
@@ -476,19 +476,19 @@
  * Checks if item is vendable in this machine should be performed before
  * calling. W is the item being inserted, R is the associated vending_product entry.
  */
-/obj/machinery/vending/proc/stock(obj/item/W, var/datum/stored_items/vending_products/R, var/mob/user)
+/obj/machinery/vending/proc/stock(obj/item/W, datum/stored_items/vending_products/R, mob/user)
 	if(!user.unEquip(W))
 		return
 
 	if(R.add_product(W))
-		to_chat(user, "<span class='notice'>You insert \the [W] in the product receptor.</span>")
+		to_chat(user, SPAN_NOTICE("You insert \the [W] in the product receptor."))
 		SSnano.update_uis(src)
 		return 1
 
 	SSnano.update_uis(src)
 
 /obj/machinery/vending/Process()
-	if(stat & (BROKEN|NOPOWER))
+	if(inoperable())
 		return
 
 	if(!src.active)
@@ -508,15 +508,14 @@
 
 	return
 
-/obj/machinery/vending/proc/speak(var/message)
-	if(stat & NOPOWER)
+/obj/machinery/vending/proc/speak(message)
+	if(!is_powered())
 		return
 
 	if (!message)
 		return
 
-	for(var/mob/O in hearers(src, null))
-		O.show_message("<span class='game say'><span class='name'>\The [src]</span> beeps, \"[message]\"</span>",2)
+	audible_message(SPAN_CLASS("game say", "[SPAN_CLASS("name", "\The [src]")] beeps, \"[message]\""))
 	return
 
 /obj/machinery/vending/powered()
@@ -524,9 +523,9 @@
 
 /obj/machinery/vending/on_update_icon()
 	overlays.Cut()
-	if(stat & BROKEN)
+	if(MACHINE_IS_BROKEN(src))
 		icon_state = "[initial(icon_state)]-broken"
-	else if( !(stat & NOPOWER) )
+	else if( is_powered() )
 		icon_state = initial(icon_state)
 	else
 		spawn(rand(0, 15))
@@ -557,7 +556,7 @@
 		return 0
 	spawn(0)
 		throw_item.throw_at(target, rand(1,2), 3)
-	src.visible_message("<span class='warning'>\The [src] launches \a [throw_item] at \the [target]!</span>")
+	src.visible_message(SPAN_WARNING("\The [src] launches \a [throw_item] at \the [target]!"))
 	return 1
 
 /*
@@ -638,10 +637,12 @@
 					/obj/item/reagent_containers/food/drinks/bottle/cream = 5,
 					/obj/item/reagent_containers/food/drinks/cans/sodawater = 15,
 					/obj/item/reagent_containers/food/drinks/bottle/grenadine = 5,
+					/obj/item/reagent_containers/food/drinks/bottle/thoom = 2,
 					/obj/item/reagent_containers/food/condiment/mint = 2,
 					/obj/item/reagent_containers/food/drinks/ice = 10,
 					/obj/item/glass_extra/stick = 15,
-					/obj/item/glass_extra/straw = 15)
+					/obj/item/glass_extra/straw = 15
+					)
 	contraband = list(/obj/item/reagent_containers/food/drinks/bottle/premiumwine = 5,
 					/obj/item/reagent_containers/food/drinks/bottle/premiumvodka = 5,
 					/obj/item/reagent_containers/food/drinks/bottle/patron = 5,
@@ -709,9 +710,9 @@
 
 /obj/machinery/vending/coffee/on_update_icon()
 	..()
-	if(stat & BROKEN && prob(20))
+	if(MACHINE_IS_BROKEN(src) && prob(20))
 		icon_state = "[initial(icon_state)]-hellfire"
-	else if(!(stat & NOPOWER))
+	else if(is_powered())
 		overlays += image(icon, "[initial(icon_state)]-screen")
 
 
@@ -797,6 +798,7 @@
 					/obj/item/reagent_containers/food/drinks/glass2/fitnessflask/proteinshake = 8,
 					/obj/item/reagent_containers/food/drinks/glass2/fitnessflask = 8,
 					/obj/item/reagent_containers/food/snacks/proteinbar = 8,
+					/obj/item/reagent_containers/food/snacks/meatcube = 8,
 					/obj/item/reagent_containers/pill/diet = 8,
 					/obj/item/towel/random = 8)
 
@@ -806,6 +808,7 @@
 					/obj/item/reagent_containers/food/drinks/glass2/fitnessflask/proteinshake = 20,
 					/obj/item/reagent_containers/food/drinks/glass2/fitnessflask = 5,
 					/obj/item/reagent_containers/food/snacks/proteinbar = 5,
+					/obj/item/reagent_containers/food/snacks/meatcube = 10,
 					/obj/item/reagent_containers/pill/diet = 25,
 					/obj/item/towel/random = 40)
 
@@ -813,7 +816,7 @@
 
 /obj/machinery/vending/fitness/on_update_icon()
 	..()
-	if(!(stat & NOPOWER))
+	if(is_powered())
 		overlays += image(icon, "[initial(icon_state)]-overlay")
 
 /obj/machinery/vending/cigarette
@@ -848,6 +851,7 @@
 					/obj/item/storage/chewables/rollable/bad = 2,
 					/obj/item/storage/chewables/rollable/generic = 2,
 					/obj/item/storage/chewables/rollable/fine = 2,
+					/obj/item/storage/chewables/rollable/rollingkit = 2,
 					/obj/item/storage/fancy/cigarettes = 5,
 					/obj/item/storage/fancy/cigarettes/luckystars = 2,
 					/obj/item/storage/fancy/cigarettes/jerichos = 2,
@@ -888,6 +892,7 @@
 					/obj/item/storage/chewables/rollable/bad = 20,
 					/obj/item/storage/chewables/rollable/generic = 40,
 					/obj/item/storage/chewables/rollable/fine = 60,
+					/obj/item/storage/chewables/rollable/rollingkit = 45,
 					/obj/item/storage/fancy/cigarettes = 45,
 					/obj/item/storage/fancy/cigarettes/luckystars = 50,
 					/obj/item/storage/fancy/cigarettes/jerichos = 65,
@@ -988,7 +993,7 @@
 	density = FALSE //It is wall-mounted, and thus, not dense. --Superxpdude
 	base_type = /obj/machinery/vending/wallmed2
 	products = list(
-		/obj/item/reagent_containers/hypospray/autoinjector = 5,
+		/obj/item/reagent_containers/hypospray/autoinjector/inaprovaline = 5,
 		/obj/item/stack/medical/bruise_pack = 4,
 		/obj/item/stack/medical/ointment = 4,
 		/obj/item/storage/med_pouch/trauma,
@@ -1058,7 +1063,7 @@
 					  /obj/item/seeds/nettleseed = 2,/obj/item/seeds/reishimycelium = 2,/obj/item/seeds/reishimycelium = 2,/obj/item/seeds/shandseed = 2,)
 	premium = list(/obj/item/reagent_containers/spray/waterflower = 1)
 
-/obj/machinery/vending/hydroseeds/vend(var/datum/stored_items/vending_products/R, mob/user)
+/obj/machinery/vending/hydroseeds/vend(datum/stored_items/vending_products/R, mob/user)
 	..()
 	flick("[icon_state]-shelf[rand(3)]", src)
 
@@ -1118,6 +1123,7 @@
 	/obj/item/tray = 8,
 	/obj/item/material/knife/kitchen = 3,
 	/obj/item/material/kitchen/rollingpin = 2,
+	/obj/item/serving_bowl = 20,
 	/obj/item/reagent_containers/food/drinks/pitcher = 2,
 	/obj/item/reagent_containers/food/drinks/flask/vacuumflask = 4,
 	/obj/item/reagent_containers/food/drinks/glass2/coffeecup = 8,
@@ -1187,11 +1193,11 @@
 					/obj/item/storage/belt/utility/crystal = 5,
 					/obj/item/storage/toolbox/crystal = 5)
 
-/obj/machinery/vending/tool/adherent/vend(var/datum/stored_items/vending_products/R, var/mob/living/carbon/user)
+/obj/machinery/vending/tool/adherent/vend(datum/stored_items/vending_products/R, mob/living/carbon/user)
 	if((istype(user) && user.species.name == SPECIES_ADHERENT) || emagged)
 		. = ..()
 	else
-		to_chat(user, "<span class='notice'>The vending machine emits a discordant note, and a small hole blinks several times. It looks like it wants something inserted.</span>")
+		to_chat(user, SPAN_NOTICE("The vending machine emits a discordant note, and a small hole blinks several times. It looks like it wants something inserted."))
 
 /obj/machinery/vending/engivend
 	name = "\improper Engi-Vend"
@@ -1254,7 +1260,7 @@
 
 /obj/machinery/vending/props/on_update_icon()
 	..()
-	if(!(stat & NOPOWER))
+	if(is_powered())
 		overlays += image(icon, "[initial(icon_state)]-overlay")
 
 //FOR ACTORS GUILD - Containers
@@ -1363,7 +1369,7 @@
 
 /obj/machinery/vending/snix/on_update_icon()
 	..()
-	if(!(stat & NOPOWER))
+	if(is_powered())
 		overlays += image(icon, "[initial(icon_state)]-fan")
 
 /obj/machinery/vending/sol
@@ -1422,7 +1428,7 @@
 
 /obj/machinery/vending/weeb/on_update_icon()
 	..()
-	if(!(stat & NOPOWER))
+	if(is_powered())
 		overlays += image(icon, "[initial(icon_state)]-fan")
 
 /obj/machinery/vending/hotfood
@@ -1444,7 +1450,7 @@
 
 /obj/machinery/vending/hotfood/on_update_icon()
 	..()
-	if(!(stat & NOPOWER))
+	if(is_powered())
 		overlays += image(icon, "[initial(icon_state)]-heater")
 
 

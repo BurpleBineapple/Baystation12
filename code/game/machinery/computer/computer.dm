@@ -6,7 +6,7 @@
 	anchored = TRUE
 	idle_power_usage = 300
 	active_power_usage = 300
-	construct_state = /decl/machine_construction/default/panel_closed/computer
+	construct_state = /singleton/machine_construction/default/panel_closed/computer
 	uncreated_component_parts = null
 	stat_immune = 0
 	frame_type = /obj/machinery/constructable_frame/computerframe/deconstruct
@@ -39,10 +39,10 @@
 
 /obj/machinery/computer/ex_act(severity)
 	switch(severity)
-		if(1.0)
+		if(EX_ACT_DEVASTATING)
 			qdel(src)
 			return
-		if(2.0)
+		if(EX_ACT_HEAVY)
 			if (prob(25))
 				qdel(src)
 				return
@@ -50,13 +50,13 @@
 				for(var/x in verbs)
 					verbs -= x
 				take_damage(max_health)
-		if(3.0)
+		if(EX_ACT_LIGHT)
 			if (prob(25))
 				for(var/x in verbs)
 					verbs -= x
 				take_damage(max_health)
 
-/obj/machinery/computer/bullet_act(var/obj/item/projectile/Proj)
+/obj/machinery/computer/bullet_act(obj/item/projectile/Proj)
 	take_damage(Proj.get_structure_damage())
 	..()
 
@@ -72,8 +72,8 @@
 	take_damage(I.force)
 	..()
 
-/obj/machinery/computer/proc/take_damage(var/damage)
-	if (health <= 0)
+/obj/machinery/computer/proc/take_damage(damage)
+	if (health <= 0 || !can_use_tools)
 		return
 
 	health -= damage
@@ -98,7 +98,7 @@
 			overlays += icon_keyboard ? "[icon_keyboard]_off" : "keyboard"
 		return
 
-	if(stat & NOPOWER)
+	if(!is_powered())
 		set_light(0)
 		if(icon_keyboard)
 			overlays += image(icon,"[icon_keyboard]_off", overlay_layer)
@@ -106,7 +106,7 @@
 	else
 		set_light(light_max_bright_on, light_inner_range_on, light_outer_range_on, 2, light_color)
 
-	if(stat & BROKEN)
+	if(MACHINE_IS_BROKEN(src))
 		overlays += image(icon,"[icon_state]_broken", overlay_layer)
 	else
 		overlays += get_screen_overlay()
@@ -126,11 +126,11 @@
 	return text
 
 /obj/machinery/computer/dismantle(mob/user)
-	if(stat & BROKEN)
-		to_chat(user, "<span class='notice'>The broken glass falls out.</span>")
+	if(MACHINE_IS_BROKEN(src))
+		to_chat(user, SPAN_NOTICE("The broken glass falls out."))
 		for(var/obj/item/stock_parts/console_screen/screen in component_parts)
 			qdel(screen)
 			new /obj/item/material/shard(loc)
 	else
-		to_chat(user, "<span class='notice'>You disconnect the monitor.</span>")
+		to_chat(user, SPAN_NOTICE("You disconnect the monitor."))
 	return ..()

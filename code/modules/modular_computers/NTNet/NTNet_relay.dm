@@ -8,7 +8,7 @@
 	icon_state = "bus"
 	anchored = TRUE
 	density = TRUE
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
 	machine_name = "\improper NTNet quantum relay"
@@ -31,7 +31,7 @@
 
 // TODO: Implement more logic here. For now it's only a placeholder.
 /obj/machinery/ntnet_relay/operable()
-	if(!..(EMPED))
+	if(!..(MACHINE_STAT_EMPED))
 		return FALSE
 	if(dos_failure)
 		return FALSE
@@ -65,7 +65,7 @@
 		update_icon()
 		ntnet_global.add_log("Quantum relay ([uid]) switched from overload recovery mode to normal operation mode.")
 
-/obj/machinery/ntnet_relay/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = GLOB.default_state)
+/obj/machinery/ntnet_relay/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1, datum/topic_state/state = GLOB.default_state)
 	var/list/data = list()
 	data["enabled"] = enabled
 	data["dos_capacity"] = dos_capacity
@@ -80,7 +80,7 @@
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/ntnet_relay/interface_interact(var/mob/living/user)
+/obj/machinery/ntnet_relay/interface_interact(mob/living/user)
 	ui_interact(user)
 	return TRUE
 

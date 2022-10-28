@@ -1,3 +1,6 @@
+#define ACCESSORY_ROLLED_DEFAULT null // Use the default/base sprite for the accessory.
+#define ACCESSORY_ROLLED_NONE "none" // Use no sprite/hide the accessory.
+
 /obj/item/clothing/accessory
 	name = "tie"
 	desc = "A neosilk clip-on tie."
@@ -18,7 +21,10 @@
 		SPECIES_NABBER = 'icons/mob/species/nabber/onmob_accessories_gas.dmi',
 		SPECIES_UNATHI = 'icons/mob/species/unathi/generated/onmob_accessories_unathi.dmi'
 		)
-	var/list/on_rolled = list()	//used when jumpsuit sleevels are rolled ("rolled" entry) or it's rolled down ("down"). Set to "none" to hide in those states.
+	/// String (One of `ACCESSORY_ROLLED_*` or a valid icon state). The icon_state or flag to use when the attached uniform is rolled down.
+	var/on_rolled_down = ACCESSORY_ROLLED_DEFAULT
+	/// String (One of `ACCESSORY_ROLLED_*` or a valid icon state). The icon_state or flag to use when the attached uniform has its sleeves rolled up.
+	var/on_rolled_sleeves = ACCESSORY_ROLLED_DEFAULT
 	var/slowdown //used when an accessory is meant to slow the wearer down when attached to clothing
 
 
@@ -49,7 +55,7 @@
 
 
 /obj/item/clothing/accessory/get_mob_overlay(mob/user_mob, slot)
-	if(!istype(loc,/obj/item/clothing/))	//don't need special handling if it's worn as normal item.
+	if(!istype(loc,/obj/item/clothing))	//don't need special handling if it's worn as normal item.
 		return ..()
 	var/bodytype = "Default"
 	if(ishuman(user_mob))
@@ -61,10 +67,10 @@
 
 		if(istype(loc,/obj/item/clothing/under))
 			var/obj/item/clothing/under/C = loc
-			if(on_rolled["down"] && C.rolled_down > 0)
-				tmp_icon_state = on_rolled["down"]
-			else if(on_rolled["rolled"] && C.rolled_sleeves > 0)
-				tmp_icon_state = on_rolled["rolled"]
+			if (on_rolled_down && C.rolled_down > 0)
+				tmp_icon_state = on_rolled_down
+			else if (on_rolled_sleeves && C.rolled_sleeves > 0)
+				tmp_icon_state = on_rolled_sleeves
 
 		var/use_sprite_sheet = accessory_icons[slot]
 		if(sprite_sheets[bodytype])
@@ -77,7 +83,7 @@
 
 
 //when user attached an accessory to S
-/obj/item/clothing/accessory/proc/on_attached(var/obj/item/clothing/S, var/mob/user)
+/obj/item/clothing/accessory/proc/on_attached(obj/item/clothing/S, mob/user)
 	if(!istype(S))
 		return
 	parent = S
@@ -85,11 +91,11 @@
 	parent.overlays += get_inv_overlay()
 
 	if(user)
-		to_chat(user, "<span class='notice'>You attach \the [src] to \the [parent].</span>")
+		to_chat(user, SPAN_NOTICE("You attach \the [src] to \the [parent]."))
 		src.add_fingerprint(user)
 
 
-/obj/item/clothing/accessory/proc/on_removed(var/mob/user)
+/obj/item/clothing/accessory/proc/on_removed(mob/user)
 	if(!parent)
 		return
 	parent.overlays -= get_inv_overlay()

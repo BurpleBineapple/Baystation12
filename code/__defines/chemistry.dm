@@ -17,14 +17,6 @@
 
 #define CHEM_SYNTH_ENERGY 500 // How much energy does it take to synthesize 1 unit of chemical, in Joules.
 
-// Some on_mob_life() procs check for alien races.
-#define IS_DIONA   1
-#define IS_VOX     2
-#define IS_SKRELL  3
-#define IS_UNATHI  4
-#define IS_SLIME   5
-#define IS_NABBER  6
-
 #define CE_STABLE        "stable"       // Inaprovaline
 #define CE_ANTIBIOTIC    "antibiotic"   // Spaceacilin
 #define CE_BLOODRESTORE  "bloodrestore" // Iron/nutriment
@@ -55,5 +47,5 @@
 #define IGNORE_MOB_SIZE    FLAG(0)
 #define AFFECTS_DEAD       FLAG(1)
 
-#define HANDLE_REACTIONS(_reagents)  SSchemistry.processing[_reagents] = TRUE
-#define UNQUEUE_REACTIONS(_reagents) SSchemistry.processing -= _reagents
+#define HANDLE_REACTIONS(_reagents)  SSchemistry.active_reagents[_reagents] = TRUE
+#define UNQUEUE_REACTIONS(_reagents) SSchemistry.active_reagents -= _reagents

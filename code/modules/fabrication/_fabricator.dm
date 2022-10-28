@@ -13,8 +13,8 @@
 	stat_immune = 0
 	wires =           /datum/wires/fabricator
 	base_type =       /obj/machinery/fabricator
-	construct_state = /decl/machine_construction/default/panel_closed
-	
+	construct_state = /singleton/machine_construction/default/panel_closed
+
 	machine_name = "autolathe"
 	machine_desc = "Autolathes can produce a very wide array of useful objects from raw materials."
 
@@ -41,7 +41,7 @@
 	var/fab_status_flags = 0
 	var/mat_efficiency = 1.1
 	var/build_time_multiplier = 1
-	var/global/list/stored_substances_to_names = list()
+	var/static/list/stored_substances_to_names = list()
 
 /obj/machinery/fabricator/Destroy()
 	QDEL_NULL(currently_building)
@@ -77,7 +77,7 @@
 				var/datum/reagent/reg = mat
 				stored_substances_to_names[mat] = initial(reg.name)
 
-/obj/machinery/fabricator/state_transition(var/decl/machine_construction/default/new_state)
+/obj/machinery/fabricator/state_transition(singleton/machine_construction/default/new_state)
 	. = ..()
 	if(istype(new_state))
 		updateUsrDialog()
@@ -91,16 +91,16 @@
 	return ..()
 
 /obj/machinery/fabricator/proc/is_functioning()
-	. = use_power != POWER_USE_OFF && !(stat & NOPOWER) && !(stat & BROKEN) && !(fab_status_flags & FAB_DISABLED)
+	. = use_power != POWER_USE_OFF && is_powered() && !MACHINE_IS_BROKEN(src) && !(fab_status_flags & FAB_DISABLED)
 
-/obj/machinery/fabricator/Process(var/wait)
+/obj/machinery/fabricator/Process(wait)
 	..()
 	if(use_power == POWER_USE_ACTIVE && (fab_status_flags & FAB_BUSY))
 		update_current_build(wait)
 
 /obj/machinery/fabricator/on_update_icon()
 	overlays.Cut()
-	if(stat & NOPOWER)
+	if(!is_powered())
 		icon_state = "[base_icon_state]_d"
 	else if(currently_building)
 		icon_state = "[base_icon_state]_p"
@@ -112,7 +112,7 @@
 		new_overlays += panel_image
 	overlays = new_overlays
 
-/obj/machinery/fabricator/proc/remove_mat_overlay(var/mat_overlay)
+/obj/machinery/fabricator/proc/remove_mat_overlay(mat_overlay)
 	material_overlays -= mat_overlay
 	update_icon()
 

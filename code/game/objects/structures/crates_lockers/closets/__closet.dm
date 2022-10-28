@@ -18,7 +18,8 @@
 
 	var/storage_types = CLOSET_STORAGE_ALL
 	var/setup = CLOSET_CAN_BE_WELDED
-	var/closet_appearance = /decl/closet_appearance
+	var/closet_appearance = /singleton/closet_appearance
+	material = MATERIAL_STEEL
 
 	// TODO: Turn these into flags. Skipped it for now because it requires updating 100+ locations...
 	var/broken = FALSE
@@ -32,11 +33,13 @@
 		verbs += /obj/structure/closet/proc/togglelock_verb
 
 	if(ispath(closet_appearance))
-		var/decl/closet_appearance/app = decls_repository.get_decl(closet_appearance)
+		var/singleton/closet_appearance/app = GET_SINGLETON(closet_appearance)
 		if(app)
 			icon = app.icon
 			color = null
 			queue_icon_update()
+
+	material = SSmaterials.get_material_by_name(material)
 
 	return INITIALIZE_HINT_LATELOAD
 
@@ -139,7 +142,7 @@
 	return 1
 
 #define CLOSET_CHECK_TOO_BIG(x) (stored_units + . + x > storage_capacity)
-/obj/structure/closet/proc/store_items(var/stored_units)
+/obj/structure/closet/proc/store_items(stored_units)
 	. = 0
 
 	for(var/obj/effect/dummy/chameleon/AD in loc)
@@ -160,7 +163,7 @@
 		I.pixel_y = 0
 		I.pixel_z = 0
 
-/obj/structure/closet/proc/store_mobs(var/stored_units)
+/obj/structure/closet/proc/store_mobs(stored_units)
 	. = 0
 	for(var/mob/living/M in loc)
 		if(M.buckled || M.pinned.len || M.anchored)
@@ -174,7 +177,7 @@
 			M.client.eye = src
 		M.forceMove(src)
 
-/obj/structure/closet/proc/store_structures(var/stored_units)
+/obj/structure/closet/proc/store_structures(stored_units)
 	. = 0
 
 	for(var/obj/structure/S in loc)
@@ -215,12 +218,12 @@
 	if(locked)
 		togglelock(user)
 	else if(!(src.opened ? src.close() : src.open()))
-		to_chat(user, "<span class='notice'>It won't budge!</span>")
+		to_chat(user, SPAN_NOTICE("It won't budge!"))
 		update_icon()
 
 /obj/structure/closet/ex_act(severity)
 	// Damage everything inside the closet.
-	if (severity < 3)
+	if (severity < EX_ACT_LIGHT)
 		for (var/atom/A as anything in src)
 			A.ex_act(severity + 1)
 	..()
@@ -273,9 +276,9 @@
 			for(var/obj/item/I in LB.contents)
 				LB.remove_from_storage(I, T, 1)
 			LB.finish_bulk_removal()
-			user.visible_message("<span class='notice'>[user] empties \the [LB] into \the [src].</span>", \
-								 "<span class='notice'>You empty \the [LB] into \the [src].</span>", \
-								 "<span class='notice'>You hear rustling of clothes.</span>")
+			user.visible_message(SPAN_NOTICE("[user] empties \the [LB] into \the [src]."), \
+								 SPAN_NOTICE("You empty \the [LB] into \the [src]."), \
+								 SPAN_NOTICE("You hear rustling of clothes."))
 			return
 
 		if(user.unEquip(W, loc))
@@ -286,7 +289,7 @@
 		return
 
 	if (istype(W, /obj/item/melee/energy/blade))
-		if(emag_act(INFINITY, user, "<span class='danger'>The locker has been sliced open by [user] with \an [W]</span>!", "<span class='danger'>You hear metal being sliced and sparks flying.</span>"))
+		if(emag_act(INFINITY, user, "[SPAN_DANGER("The locker has been sliced open by [user] with \an [W]")]!", SPAN_DANGER("You hear metal being sliced and sparks flying.")))
 			var/datum/effect/effect/system/spark_spread/spark_system = new /datum/effect/effect/system/spark_spread()
 			spark_system.set_up(5, 0, src.loc)
 			spark_system.start()
@@ -304,11 +307,15 @@
 			if(!WT.isOn())
 				return
 			else
-				to_chat(user, "<span class='notice'>You need more welding fuel to complete this task.</span>")
+				to_chat(user, SPAN_NOTICE("You need more welding fuel to complete this task."))
 				return
 		src.welded = !src.welded
 		src.update_icon()
-		user.visible_message("<span class='warning'>\The [src] has been [welded?"welded shut":"unwelded"] by \the [user].</span>", blind_message = "You hear welding.", range = 3)
+		user.visible_message(
+			SPAN_WARNING("\The [src] has been [welded?"welded shut":"unwelded"] by \the [user]."),
+			blind_message = "You hear welding.",
+			range = 3
+		)
 		return
 
 	if (setup & CLOSET_HAS_LOCK)
@@ -318,9 +325,9 @@
 	attack_hand(user)
 
 /obj/structure/closet/proc/slice_into_parts(obj/W, mob/user)
-	new /obj/item/stack/material/steel(src.loc, 2)
-	user.visible_message("<span class='notice'>\The [src] has been cut apart by [user] with \the [W].</span>", \
-						 "<span class='notice'>You have cut \the [src] apart with \the [W].</span>", \
+	material.place_sheet(src.loc, 2)
+	user.visible_message(SPAN_NOTICE("\The [src] has been cut apart by [user] with \the [W]."), \
+						 SPAN_NOTICE("You have cut \the [src] apart with \the [W]."), \
 						 "You hear welding.")
 	qdel(src)
 
@@ -335,7 +342,7 @@
 		return
 	if(user.restrained() || user.stat || user.weakened || user.stunned || user.paralysis)
 		return
-	if((!( istype(O, /atom/movable) ) || O.anchored || !Adjacent(user) || !Adjacent(O) || !user.Adjacent(O) || list_find(user.contents, src)))
+	if((!( istype(O, /atom/movable) ) || O.anchored || !Adjacent(user) || !Adjacent(O) || !user.Adjacent(O) || user.contents.Find(src)))
 		return
 	if(!isturf(user.loc)) // are you in a container/closet/pod/etc?
 		return
@@ -345,7 +352,7 @@
 		return
 	step_towards(O, src.loc)
 	if(user != O)
-		user.show_viewers("<span class='danger'>[user] stuffs [O] into [src]!</span>")
+		user.show_viewers(SPAN_DANGER("[user] stuffs [O] into [src]!"))
 	src.add_fingerprint(user)
 	return
 
@@ -358,7 +365,7 @@
 		return
 
 	if(!src.open())
-		to_chat(user, "<span class='notice'>It won't budge!</span>")
+		to_chat(user, SPAN_NOTICE("It won't budge!"))
 
 /obj/structure/closet/attack_hand(mob/user as mob)
 	src.add_fingerprint(user)
@@ -382,7 +389,7 @@
 		src.add_fingerprint(usr)
 		src.toggle(usr)
 	else
-		to_chat(usr, "<span class='warning'>This mob type can't use this verb.</span>")
+		to_chat(usr, SPAN_WARNING("This mob type can't use this verb."))
 
 /obj/structure/closet/on_update_icon()
 	if(opened)
@@ -398,10 +405,9 @@
 				icon_state = "closed_unlocked[welded ? "_welded" : ""]"
 			overlays.Cut()
 
-/obj/structure/closet/handle_death_change(new_death_state)
-	if (new_death_state)
-		dump_contents()
-		qdel(src)
+/obj/structure/closet/on_death()
+	dump_contents()
+	qdel(src)
 
 /obj/structure/closet/proc/req_breakout()
 	if(opened)
@@ -410,7 +416,7 @@
 		return 1 // Closed and locked
 	return (!welded) //closed but not welded...
 
-/obj/structure/closet/mob_breakout(var/mob/living/escapee)
+/obj/structure/closet/mob_breakout(mob/living/escapee)
 
 	. = ..()
 	var/breakout_time = 2 //2 minutes by default
@@ -421,13 +427,13 @@
 	escapee.setClickCooldown(100)
 
 	//okay, so the closet is either welded or locked... resist!!!
-	to_chat(escapee, "<span class='warning'>You lean on the back of \the [src] and start pushing the door open. (this will take about [breakout_time] minutes)</span>")
+	to_chat(escapee, SPAN_WARNING("You lean on the back of \the [src] and start pushing the door open. (this will take about [breakout_time] minutes)"))
 
-	visible_message("<span class='danger'>\The [src] begins to shake violently!</span>")
+	visible_message(SPAN_DANGER("\The [src] begins to shake violently!"))
 
 	breakout = 1 //can't think of a better way to do this right now.
 	for(var/i in 1 to (6*breakout_time * 2)) //minutes * 6 * 5seconds * 2
-		if(!do_after(escapee, 50, incapacitation_flags = INCAPACITATION_DEFAULT & ~INCAPACITATION_RESTRAINED)) //5 seconds
+		if(!do_after(escapee, 5 SECONDS, do_flags = DO_DEFAULT | DO_USER_UNIQUE_ACT, incapacitation_flags = INCAPACITATION_DEFAULT & ~INCAPACITATION_RESTRAINED)) //5 seconds
 			breakout = 0
 			return FALSE
 		//Perform the same set of checks as above for weld and lock status to determine if there is even still a point in 'resisting'...
@@ -441,8 +447,8 @@
 
 	//Well then break it!
 	breakout = 0
-	to_chat(escapee, "<span class='warning'>You successfully break out!</span>")
-	visible_message("<span class='danger'>\The [escapee] successfully broke out of \the [src]!</span>")
+	to_chat(escapee, SPAN_WARNING("You successfully break out!"))
+	visible_message(SPAN_DANGER("\The [escapee] successfully broke out of \the [src]!"))
 	playsound(src.loc, 'sound/effects/grillehit.ogg', 100, 1)
 	break_open()
 	shake_animation()
@@ -459,7 +465,7 @@
 		BD.unwrap()
 	open()
 
-/obj/structure/closet/onDropInto(var/atom/movable/AM)
+/obj/structure/closet/onDropInto(atom/movable/AM)
 	return
 
 // If we use the /obj/structure/closet/proc/togglelock variant BYOND asks the user to select an input for id_card, which is then mostly irrelevant.
@@ -470,19 +476,19 @@
 
 	return togglelock(usr)
 
-/obj/structure/closet/proc/togglelock(var/mob/user, var/obj/item/card/id/id_card)
+/obj/structure/closet/proc/togglelock(mob/user, obj/item/card/id/id_card)
 	if(!(setup & CLOSET_HAS_LOCK))
 		return FALSE
 	if(!CanPhysicallyInteract(user))
 		return FALSE
 	if(src.opened)
-		to_chat(user, "<span class='notice'>Close \the [src] first.</span>")
+		to_chat(user, SPAN_NOTICE("Close \the [src] first."))
 		return FALSE
 	if(src.broken)
-		to_chat(user, "<span class='warning'>\The [src] appears to be broken.</span>")
+		to_chat(user, SPAN_WARNING("\The [src] appears to be broken."))
 		return FALSE
 	if(user.loc == src)
-		to_chat(user, "<span class='notice'>You can't reach the lock from inside.</span>")
+		to_chat(user, SPAN_NOTICE("You can't reach the lock from inside."))
 		return FALSE
 
 	add_fingerprint(user)
@@ -496,23 +502,26 @@
 
 	if(CanToggleLock(user, id_card))
 		locked = !locked
-		visible_message("<span class='notice'>\The [src] has been [locked ? null : "un"]locked by \the [user].</span>", range = 3)
+		visible_message(
+			SPAN_NOTICE("\The [src] has been [locked ? null : "un"]locked by \the [user]."),
+			range = 3
+		)
 		update_icon()
 		return TRUE
 	else
-		to_chat(user, "<span class='warning'>Access denied!</span>")
+		to_chat(user, SPAN_WARNING("Access denied!"))
 		return FALSE
 
-/obj/structure/closet/proc/CanToggleLock(var/mob/user, var/obj/item/card/id/id_card)
+/obj/structure/closet/proc/CanToggleLock(mob/user, obj/item/card/id/id_card)
 	return allowed(user) || (istype(id_card) && check_access_list(id_card.GetAccess()))
 
-/obj/structure/closet/AltClick(var/mob/user)
+/obj/structure/closet/AltClick(mob/user)
 	if(!src.opened)
 		togglelock(user)
 	else
 		return ..()
 
-/obj/structure/closet/CtrlAltClick(var/mob/user)
+/obj/structure/closet/CtrlAltClick(mob/user)
 	verb_toggleopen()
 	return 1
 
@@ -531,15 +540,15 @@
 				src.req_access += pick(get_all_station_access())
 	..()
 
-/obj/structure/closet/emag_act(var/remaining_charges, var/mob/user, var/emag_source, var/visual_feedback = "", var/audible_feedback = "")
+/obj/structure/closet/emag_act(remaining_charges, mob/user, emag_source, visual_feedback = "", audible_feedback = "")
 	if(!opened && make_broken())
 		update_icon()
 		if(visual_feedback)
 			visible_message(visual_feedback, audible_feedback)
 		else if(user && emag_source)
-			visible_message("<span class='warning'>\The [src] has been broken by \the [user] with \an [emag_source]!</span>", "You hear a faint electrical spark.")
+			visible_message(SPAN_WARNING("\The [src] has been broken by \the [user] with \an [emag_source]!"), "You hear a faint electrical spark.")
 		else
-			visible_message("<span class='warning'>\The [src] sparks and breaks open!</span>", "You hear a faint electrical spark.")
+			visible_message(SPAN_WARNING("\The [src] sparks and breaks open!"), "You hear a faint electrical spark.")
 		return 1
 	else
 		. = ..()

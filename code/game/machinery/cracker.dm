@@ -30,7 +30,7 @@
 	update_icon()
 	return TRUE
 
-/obj/machinery/portable_atmospherics/cracker/attackby(var/obj/item/thing, var/mob/user)
+/obj/machinery/portable_atmospherics/cracker/attackby(obj/item/thing, mob/user)
 	// remove deuterium as a reagent
 	if(thing.is_open_container() && thing.reagents)
 		if(!reagent_buffer[MATERIAL_DEUTERIUM] || reagent_buffer[MATERIAL_DEUTERIUM] <= 0)
@@ -46,13 +46,13 @@
 
 /obj/machinery/portable_atmospherics/cracker/power_change()
 	. = ..()
-	if(. && (stat & NOPOWER))
+	if(. && !is_powered())
 		update_use_power(POWER_USE_IDLE)
 		update_icon()
 
 /obj/machinery/portable_atmospherics/cracker/set_broken(new_state)
 	. = ..()
-	if(. && (stat & BROKEN))
+	if(. && MACHINE_IS_BROKEN(src))
 		update_use_power(POWER_USE_IDLE)
 		update_icon()
 

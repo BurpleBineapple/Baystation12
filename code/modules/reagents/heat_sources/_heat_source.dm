@@ -13,7 +13,7 @@
 	anchored = TRUE
 	idle_power_usage = 0
 	active_power_usage = 1.2 KILOWATTS
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
 	machine_name = "chemical heater"
@@ -64,7 +64,7 @@
 	..()
 	if(temperature != last_temperature)
 		queue_icon_update()
-	if(((stat & (BROKEN|NOPOWER)) || !anchored) && use_power >= POWER_USE_ACTIVE)
+	if(((inoperable()) || !anchored) && use_power >= POWER_USE_ACTIVE)
 		update_use_power(POWER_USE_IDLE)
 		queue_icon_update()
 
@@ -82,7 +82,7 @@
 	else
 		..()
 
-/obj/machinery/reagent_temperature/interface_interact(var/mob/user)
+/obj/machinery/reagent_temperature/interface_interact(mob/user)
 	interact(user)
 	return TRUE
 
@@ -100,7 +100,7 @@
 		return TRUE // Don't kill this processing loop unless we're not powered.
 	. = ..()
 
-/obj/machinery/reagent_temperature/attackby(var/obj/item/thing, var/mob/user)
+/obj/machinery/reagent_temperature/attackby(obj/item/thing, mob/user)
 	if(isWrench(thing))
 		if(use_power == POWER_USE_ACTIVE)
 			to_chat(user, SPAN_WARNING("Turn \the [src] off first!"))
@@ -108,7 +108,7 @@
 			anchored = !anchored
 			visible_message(SPAN_NOTICE("\The [user] [anchored ? "secured" : "unsecured"] \the [src]."))
 			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-		return
+		return TRUE
 
 	if(thing.reagents)
 		for(var/checktype in permitted_types)
@@ -120,8 +120,9 @@
 					container = thing
 					visible_message(SPAN_NOTICE("\The [user] places \the [container] on \the [src]."))
 					update_icon()
-				return
+				return TRUE
 		to_chat(user, SPAN_WARNING("\The [src] cannot accept \the [thing]."))
+	return ..()
 
 /obj/machinery/reagent_temperature/on_update_icon()
 
@@ -149,7 +150,7 @@
 
 	overlays = adding_overlays
 
-/obj/machinery/reagent_temperature/interact(var/mob/user)
+/obj/machinery/reagent_temperature/interact(mob/user)
 
 	var/dat = list()
 	dat += "<table>"
@@ -177,7 +178,7 @@
 	popup.set_content(jointext(dat, null))
 	popup.open()
 
-/obj/machinery/reagent_temperature/CanUseTopic(var/mob/user, var/state, var/href_list)
+/obj/machinery/reagent_temperature/CanUseTopic(mob/user, state, href_list)
 	if(href_list && href_list["remove_container"])
 		. = ..(user, GLOB.physical_state, href_list)
 		if(. == STATUS_CLOSE)
@@ -187,7 +188,7 @@
 
 /obj/machinery/reagent_temperature/proc/ToggleUsePower()
 
-	if(stat & (BROKEN|NOPOWER))
+	if(inoperable())
 		return TOPIC_HANDLED
 
 	update_use_power(use_power <= POWER_USE_IDLE ? POWER_USE_ACTIVE : POWER_USE_IDLE)
@@ -196,7 +197,7 @@
 
 	return TOPIC_REFRESH
 
-/obj/machinery/reagent_temperature/OnTopic(var/mob/user, var/href_list)
+/obj/machinery/reagent_temperature/OnTopic(mob/user, href_list)
 
 	if(href_list["adjust_temperature"])
 		target_temperature = clamp(target_temperature + text2num(href_list["adjust_temperature"]), min_temperature, max_temperature)

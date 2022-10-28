@@ -3,8 +3,8 @@ SUBSYSTEM_DEF(event)
 	wait = 2 SECONDS
 	priority = SS_PRIORITY_EVENT
 
-	var/tmp/list/processing_events = list()
-	var/tmp/pos = EVENT_LEVEL_MUNDANE
+	var/list/processing_events = list()
+	var/pos = EVENT_LEVEL_MUNDANE
 
 	//UI related
 	var/window_x = 700
@@ -25,7 +25,7 @@ SUBSYSTEM_DEF(event)
 	var/datum/event_meta/new_event = new
 
 //Subsystem procs
-/datum/controller/subsystem/event/Initialize()
+/datum/controller/subsystem/event/Initialize(start_uptime)
 	if(!all_events)
 		all_events = subtypesof(/datum/event)
 	if(!event_containers)
@@ -43,7 +43,6 @@ SUBSYSTEM_DEF(event)
 		var/datum/event_container/receiver = event_containers[text2num(event_level)]
 		var/datum/event_container/donor = GLOB.using_map.map_event_container[event_level]
 		receiver.available_events += donor.available_events
-	. = ..()
 
 /datum/controller/subsystem/event/Recover()
 	active_events = SSevent.active_events
@@ -80,7 +79,7 @@ SUBSYSTEM_DEF(event)
 
 
 //Actual event handling
-/datum/controller/subsystem/event/proc/event_complete(var/datum/event/E)
+/datum/controller/subsystem/event/proc/event_complete(datum/event/E)
 	active_events -= E
 
 	if(!E.event_meta || !E.severity)	// datum/event is used here and there for random reasons, maintaining "backwards compatibility"
@@ -96,11 +95,11 @@ SUBSYSTEM_DEF(event)
 
 	log_debug("Event '[EM.name]' has completed at [worldtime2stationtime(world.time)].")
 
-/datum/controller/subsystem/event/proc/delay_events(var/severity, var/delay)
+/datum/controller/subsystem/event/proc/delay_events(severity, delay)
 	var/datum/event_container/EC = event_containers[severity]
 	EC.next_event_time += delay
 
-/datum/controller/subsystem/event/proc/Interact(var/mob/living/user)
+/datum/controller/subsystem/event/proc/Interact(mob/living/user)
 
 	var/html = GetInteractWindow()
 
@@ -112,7 +111,7 @@ SUBSYSTEM_DEF(event)
 	if(!report_at_round_end)
 		return
 
-	to_world("<br><br><br><font size=3><b>Random Events This Round:</b></font>")
+	to_world("<br><br><br>[FONT_LARGE("<b>Random Events This Round:</b>")]")
 	for(var/datum/event/E in active_events|finished_events)
 		var/datum/event_meta/EM = E.event_meta
 		if(EM.name == "Nothing")
@@ -140,7 +139,7 @@ SUBSYSTEM_DEF(event)
 		html += "<div class='block'>"
 		html += "<h2>Available [severity_to_string[selected_event_container.severity]] Events (queued & running events will not be displayed)</h2>"
 		html += "<table[table_options]>"
-		html += "<tr><td[row_options2]>Name </td><td>Weight </td><td>MinWeight </td><td>MaxWeight </td><td>OneShot </td><td>Enabled </td><td><span class='alert'>CurrWeight </span></td><td>Remove</td></tr>"
+		html += "<tr><td[row_options2]>Name </td><td>Weight </td><td>MinWeight </td><td>MaxWeight </td><td>OneShot </td><td>Enabled </td><td>[SPAN_CLASS("alert", "CurrWeight ")]</td><td>Remove</td></tr>"
 		var/list/active_with_role = number_active_with_role()
 		for(var/datum/event_meta/EM in selected_event_container.available_events)
 			html += "<tr>"
@@ -150,7 +149,7 @@ SUBSYSTEM_DEF(event)
 			html += "<td>[EM.max_weight]</td>"
 			html += "<td><A align='right' href='?src=\ref[src];toggle_oneshot=\ref[EM]'>[EM.one_shot]</A></td>"
 			html += "<td><A align='right' href='?src=\ref[src];toggle_enabled=\ref[EM]'>[EM.enabled]</A></td>"
-			html += "<td><span class='alert'>[selected_event_container.get_weight(EM, active_with_role)]</span></td>"
+			html += "<td>[SPAN_CLASS("alert", "[selected_event_container.get_weight(EM, active_with_role)]")]</td>"
 			html += "<td><A align='right' href='?src=\ref[src];remove=\ref[EM];EC=\ref[selected_event_container]'>Remove</A></td>"
 			html += "</tr>"
 		html += "</table>"
@@ -336,7 +335,7 @@ SUBSYSTEM_DEF(event)
 	Interact(usr)
 
 //Event admin verbs
-/client/proc/forceEvent(var/type in SSevent.all_events)
+/client/proc/forceEvent(type in SSevent.all_events)
 	set name = "Trigger Event (Debug Only)"
 	set category = "Debug"
 

@@ -15,13 +15,13 @@ SUBSYSTEM_DEF(vote)
 	var/list/voting = list()     //Clients recieving UI updates.
 	var/list/vote_prototypes     //To run checks on whether they are available.
 
-/datum/controller/subsystem/vote/Initialize()
+/datum/controller/subsystem/vote/Initialize(start_uptime)
 	vote_prototypes = list()
 	for(var/vote_type in subtypesof(/datum/vote))
 		var/datum/vote/fake_vote = vote_type
 		if(initial(fake_vote.manual_allowed))
 			vote_prototypes[vote_type] = new vote_type
-	return ..()
+
 
 /datum/controller/subsystem/vote/fire(resumed = 0)
 	if(!active_vote)
@@ -102,7 +102,7 @@ SUBSYSTEM_DEF(vote)
 			if(vote_datum.can_run(C.mob))
 				. += "[capitalize(vote_datum.name)]"
 			else
-				. += "<font color='grey'>[capitalize(vote_datum.name)] (Disallowed)</font>"
+				. += SPAN_COLOR("grey", "[capitalize(vote_datum.name)] (Disallowed)")
 			. += "</a>"
 			var/toggle = vote_datum.check_toggle()
 			if(admin && toggle)

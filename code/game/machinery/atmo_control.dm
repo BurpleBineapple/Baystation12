@@ -34,7 +34,7 @@
 	. = ..()
 	set_frequency(frequency)
 
-obj/machinery/computer/air_control/Destroy()
+/obj/machinery/computer/air_control/Destroy()
 	if(radio_controller)
 		radio_controller.remove_object(src, frequency)
 	..()
@@ -43,7 +43,7 @@ obj/machinery/computer/air_control/Destroy()
 	ui_interact(user)
 	return TRUE
 
-/obj/machinery/computer/air_control/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/computer/air_control/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	ui = SSnano.try_update_ui(user, src, ui_key, ui, data, force_open)
 	data["systemname"] = name
 	get_console_data()

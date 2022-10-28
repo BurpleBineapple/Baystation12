@@ -1,5 +1,5 @@
-var/list/loadout_categories = list()
-var/list/gear_datums = list()
+var/global/list/loadout_categories = list()
+var/global/list/gear_datums = list()
 
 /datum/preferences
 	var/list/gear_list //Custom/fluff item loadouts.
@@ -12,7 +12,7 @@ var/list/gear_datums = list()
 	var/category = ""
 	var/list/gear = list()
 
-/datum/loadout_category/New(var/cat)
+/datum/loadout_category/New(cat)
 	category = cat
 	..()
 
@@ -55,7 +55,7 @@ var/list/gear_datums = list()
 	W.write("gear_list", pref.gear_list)
 	W.write("gear_slot", pref.gear_slot)
 
-/datum/category_item/player_setup_item/loadout/proc/valid_gear_choices(var/max_cost)
+/datum/category_item/player_setup_item/loadout/proc/valid_gear_choices(max_cost)
 	. = list()
 	var/mob/preference_mob = preference_mob()
 	for(var/gear_name in gear_datums)
@@ -73,7 +73,7 @@ var/list/gear_datums = list()
 			continue
 		. += gear_name
 
-/datum/category_item/player_setup_item/loadout/proc/skill_check(var/list/jobs, var/list/skills_required)
+/datum/category_item/player_setup_item/loadout/proc/skill_check(list/jobs, list/skills_required)
 	for(var/datum/job/J in jobs)
 		. = TRUE
 		for(var/R in skills_required)
@@ -127,10 +127,10 @@ var/list/gear_datums = list()
 		fcolor = "#e67300"
 	. += "<table align = 'center' width = 100%>"
 	. += "<tr><td colspan=3><center>"
-	. += "<a href='?src=\ref[src];prev_slot=1'>\<=</a><b><font color = '[fcolor]'>\[[pref.gear_slot]\]</font> </b><a href='?src=\ref[src];next_slot=1'>=\></a>"
+	. += "<a href='?src=\ref[src];prev_slot=1'>\<=</a><b>[SPAN_COLOR(fcolor, "\[[pref.gear_slot]\]")] </b><a href='?src=\ref[src];next_slot=1'>=\></a>"
 
 	if(config.max_gear_cost < INFINITY)
-		. += "<b><font color = '[fcolor]'>[total_cost]/[config.max_gear_cost]</font> loadout points spent.</b>"
+		. += "<b>[SPAN_COLOR(fcolor, "[total_cost]/[config.max_gear_cost]")] loadout points spent.</b>"
 
 	. += "<a href='?src=\ref[src];clear_loadout=1'>Clear Loadout</a>"
 	. += "<a href='?src=\ref[src];toggle_hiding=1'>[hide_unavailable_gear ? "Show all" : "Hide unavailable"]</a></center></td></tr>"
@@ -152,10 +152,10 @@ var/list/gear_datums = list()
 				category_cost += G.cost
 
 		if(category == current_tab)
-			. += " <span class='linkOn'>[category] - [category_cost]</span> "
+			. += " [SPAN_CLASS("linkOn", "[category] - [category_cost]")] "
 		else
 			if(category_cost)
-				. += " <a href='?src=\ref[src];select_category=[category]'><font color = '#e67300'>[category] - [category_cost]</font></a> "
+				. += " <a href='?src=\ref[src];select_category=[category]'>[SPAN_COLOR("#e67300", "[category] - [category_cost]")]</a> "
 			else
 				. += " <a href='?src=\ref[src];select_category=[category]'>[category] - 0</a> "
 
@@ -178,7 +178,7 @@ var/list/gear_datums = list()
 		var/ticked = (G.display_name in pref.gear_list[pref.gear_slot])
 		entry += "<tr style='vertical-align:top;'><td width=25%><a style='white-space:normal;' [ticked ? "class='linkOn' " : ""]href='?src=\ref[src];toggle_gear=\ref[G]'>[G.display_name]</a></td>"
 		entry += "<td width = 10% style='vertical-align:top'>[G.cost]</td>"
-		entry += "<td><font size=2>[G.get_description(get_gear_metadata(G,1))]</font>"
+		entry += "<td>[FONT_NORMAL(G.get_description(get_gear_metadata(G,1)))]"
 		var/allowed = 1
 		if(allowed && G.allowed_roles)
 			var/good_job = 0
@@ -187,10 +187,10 @@ var/list/gear_datums = list()
 			var/list/jobchecks = list()
 			for(var/datum/job/J in jobs)
 				if(J.type in G.allowed_roles)
-					jobchecks += "<font color=55cc55>[J.title]</font>"
+					jobchecks += SPAN_COLOR("#55cc55", J.title)
 					good_job = 1
 				else
-					jobchecks += "<font color=cc5555>[J.title]</font>"
+					jobchecks += SPAN_COLOR("#cc5555", J.title)
 					bad_job = 1
 			allowed = good_job || !bad_job
 			entry += "[english_list(jobchecks)]</i>"
@@ -207,10 +207,10 @@ var/list/gear_datums = list()
 				for(var/branch in branches)
 					var/datum/mil_branch/player_branch = GLOB.mil_branches.get_branch(branch)
 					if(player_branch.type in G.allowed_branches)
-						branch_checks += "<font color=55cc55>[player_branch.name]</font>"
+						branch_checks += SPAN_COLOR("#55cc55", player_branch.name)
 						good_branch = 1
 					else
-						branch_checks += "<font color=cc5555>[player_branch.name]</font>"
+						branch_checks += SPAN_COLOR("#cc5555", player_branch.name)
 				allowed = good_branch
 
 				entry += "[english_list(branch_checks)]</i>"
@@ -218,7 +218,7 @@ var/list/gear_datums = list()
 		if(allowed && G.allowed_skills)
 			var/list/skills_required = list()//make it into instances? instead of path
 			for(var/skill in G.allowed_skills)
-				var/decl/hierarchy/skill/instance = decls_repository.get_decl(skill)
+				var/singleton/hierarchy/skill/instance = GET_SINGLETON(skill)
 				skills_required[instance] = G.allowed_skills[skill]
 
 			allowed = skill_check(jobs, skills_required)//Checks if a single job has all the skills required
@@ -226,13 +226,13 @@ var/list/gear_datums = list()
 			entry += "<br><i>"
 			var/list/skill_checks = list()
 			for(var/R in skills_required)
-				var/decl/hierarchy/skill/S = R
+				var/singleton/hierarchy/skill/S = R
 				var/skill_entry
 				skill_entry += "[S.levels[skills_required[R]]]"
 				if(allowed)
-					skill_entry = "<font color=55cc55>[skill_entry] [R]</font>"
+					skill_entry = SPAN_COLOR("#55cc55", "[skill_entry] [R]")
 				else
-					skill_entry = "<font color=cc5555>[skill_entry] [R]</font>"
+					skill_entry = SPAN_COLOR("#cc5555", "[skill_entry] [R]")
 				skill_checks += skill_entry
 
 			entry += "[english_list(skill_checks)]</i>"
@@ -250,7 +250,7 @@ var/list/gear_datums = list()
 	. += "</table>"
 	. = jointext(.,null)
 
-/datum/category_item/player_setup_item/loadout/proc/get_gear_metadata(var/datum/gear/G, var/readonly)
+/datum/category_item/player_setup_item/loadout/proc/get_gear_metadata(datum/gear/G, readonly)
 	var/list/gear = pref.gear_list[pref.gear_slot]
 	. = gear[G.display_name]
 	if(!.)
@@ -258,14 +258,14 @@ var/list/gear_datums = list()
 		if(!readonly)
 			gear[G.display_name] = .
 
-/datum/category_item/player_setup_item/loadout/proc/get_tweak_metadata(var/datum/gear/G, var/datum/gear_tweak/tweak)
+/datum/category_item/player_setup_item/loadout/proc/get_tweak_metadata(datum/gear/G, datum/gear_tweak/tweak)
 	var/list/metadata = get_gear_metadata(G)
 	. = metadata["[tweak]"]
 	if(!.)
 		. = tweak.get_default()
 		metadata["[tweak]"] = .
 
-/datum/category_item/player_setup_item/loadout/proc/set_tweak_metadata(var/datum/gear/G, var/datum/gear_tweak/tweak, var/new_metadata)
+/datum/category_item/player_setup_item/loadout/proc/set_tweak_metadata(datum/gear/G, datum/gear_tweak/tweak, new_metadata)
 	var/list/metadata = get_gear_metadata(G)
 	metadata["[tweak]"] = new_metadata
 
@@ -340,6 +340,9 @@ var/list/gear_datums = list()
 		description = initial(O.desc)
 	if(flags & GEAR_HAS_COLOR_SELECTION)
 		gear_tweaks += gear_tweak_free_color_choice()
+	if(!(flags & GEAR_HAS_NO_CUSTOMIZATION))
+		gear_tweaks += gear_tweak_free_name(display_name)
+		gear_tweaks += gear_tweak_free_desc(description)
 	if(flags & GEAR_HAS_TYPE_SELECTION)
 		gear_tweaks += new/datum/gear_tweak/path/type(path)
 	if(flags & GEAR_HAS_SUBTYPE_SELECTION)
@@ -347,7 +350,7 @@ var/list/gear_datums = list()
 	if(custom_setup_proc)
 		gear_tweaks += new/datum/gear_tweak/custom_setup(custom_setup_proc)
 
-/datum/gear/proc/get_description(var/metadata)
+/datum/gear/proc/get_description(metadata)
 	. = description
 	for(var/datum/gear_tweak/gt in gear_tweaks)
 		. = gt.tweak_description(., metadata["[gt]"])
@@ -356,7 +359,7 @@ var/list/gear_datums = list()
 	var/path
 	var/location
 
-/datum/gear_data/New(var/path, var/location)
+/datum/gear_data/New(path, location)
 	src.path = path
 	src.location = location
 
@@ -369,7 +372,7 @@ var/list/gear_datums = list()
 		gt.tweak_item(user, item, metadata && metadata["[gt]"])
 	return item
 
-/datum/gear/proc/spawn_on_mob(var/mob/living/carbon/human/H, var/metadata)
+/datum/gear/proc/spawn_on_mob(mob/living/carbon/human/H, metadata)
 	var/obj/item/item = spawn_item(H, H, metadata)
 	if(H.equip_to_slot_if_possible(item, slot, TRYEQUIP_REDRAW | TRYEQUIP_DESTROY | TRYEQUIP_FORCE))
 		. = item
@@ -385,7 +388,7 @@ var/list/gear_datums = list()
 			to_chat(subject, SPAN_WARNING("Failed to find a valid organ to install \the [augment] into!"))
 			qdel(augment)
 			return
-		var/surgery_step = decls_repository.get_decl(/decl/surgery_step/internal/replace_organ)
+		var/surgery_step = GET_SINGLETON(/singleton/surgery_step/internal/replace_organ)
 		if (augment.surgery_configure(subject, subject, parent, null, surgery_step))
 			to_chat(subject, SPAN_WARNING("Failed to set up \the [augment] for installation in your [parent.name]!"))
 			qdel(augment)

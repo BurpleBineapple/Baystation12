@@ -74,9 +74,9 @@
 			if(HAS_BEEN_ACTIVATED)
 				to_chat(user, "It is labeled '[service_label]' and appears to be permanently disabled.")
 
-/obj/item/device/uplink_service/attack_self(var/mob/user)
+/obj/item/device/uplink_service/attack_self(mob/user)
 	if(state != AWAITING_ACTIVATION)
-		to_chat(user, "<span class='warning'>\The [src] won't activate again.</span>")
+		to_chat(user, SPAN_WARNING("\The [src] won't activate again."))
 		return
 	var/obj/effect/overmap/visitable/O = map_sectors["[get_z(src)]"]
 	var/choice = alert(user, "This will only affect your current location[istype(O) ? " ([O])" : ""]. Proceed?","Confirmation", "Yes", "No")
@@ -86,7 +86,7 @@
 		return
 	state = CURRENTLY_ACTIVE
 	update_icon()
-	user.visible_message("<span class='notice'>\The [user] activates \the [src].</span>", "<span class='notice'>You activate \the [src].</span>")
+	user.visible_message(SPAN_NOTICE("\The [user] activates \the [src]."), SPAN_NOTICE("You activate \the [src]."))
 	log_and_message_admins("has activated the service '[service_label]'", user)
 
 	if(service_duration)
@@ -101,7 +101,7 @@
 	state = HAS_BEEN_ACTIVATED
 	update_icon()
 	playsound(loc, "sparks", 50, 1)
-	visible_message("<span class='warning'>\The [src] shuts down with a spark.</span>")
+	visible_message(SPAN_WARNING("\The [src] shuts down with a spark."))
 
 /obj/item/device/uplink_service/on_update_icon()
 	switch(state)
@@ -112,10 +112,10 @@
 		if(HAS_BEEN_ACTIVATED)
 			icon_state = "sflash_burnt"
 
-/obj/item/device/uplink_service/proc/enable(var/mob/user = usr)
+/obj/item/device/uplink_service/proc/enable(mob/user = usr)
 	return TRUE
 
-/obj/item/device/uplink_service/proc/disable(var/mob/user = usr)
+/obj/item/device/uplink_service/proc/disable(mob/user = usr)
 	return
 
 /*****************
@@ -135,11 +135,11 @@
 	ssjm = null
 	. = ..()
 
-/obj/item/device/uplink_service/jamming/enable(var/mob/user = usr)
+/obj/item/device/uplink_service/jamming/enable(mob/user = usr)
 	ssjm.enable()
 	. = ..()
 
-/obj/item/device/uplink_service/jamming/disable(var/mob/user = usr)
+/obj/item/device/uplink_service/jamming/disable(mob/user = usr)
 	ssjm.disable()
 
 /obj/item/device/uplink_service/jamming/garble
@@ -242,7 +242,7 @@
 /obj/item/device/uplink_service/fake_ion_storm
 	service_label = "Ion Storm Announcement"
 
-/obj/item/device/uplink_service/fake_ion_storm/enable(var/mob/user = usr)
+/obj/item/device/uplink_service/fake_ion_storm/enable(mob/user = usr)
 	ion_storm_announcement(GetConnectedZlevels(get_z(src)))
 	. = ..()
 
@@ -252,7 +252,7 @@
 /obj/item/device/uplink_service/fake_rad_storm
 	service_label = "Radiation Storm Announcement"
 
-/obj/item/device/uplink_service/fake_rad_storm/enable(var/mob/user = usr)
+/obj/item/device/uplink_service/fake_rad_storm/enable(mob/user = usr)
 	var/datum/event_meta/EM = new(EVENT_LEVEL_MUNDANE, "Fake Radiation Storm", add_to_queue = 0)
 	new/datum/event/radiation_storm/syndicate(EM)
 	. = ..()
@@ -263,7 +263,7 @@
 /obj/item/device/uplink_service/fake_update_announcement
 	service_label = "Update Announcement"
 
-/obj/item/device/uplink_service/fake_update_announcement/enable(var/mob/user = usr)
+/obj/item/device/uplink_service/fake_update_announcement/enable(mob/user = usr)
 	var/title = sanitize(input(user, "Enter your announcement title.", "Announcement Title") as null|text)
 	if(!title)
 		return
@@ -284,7 +284,7 @@
 
 #define COPY_VALUE(KEY) new_record.set_##KEY(random_record.get_##KEY())
 
-/obj/item/device/uplink_service/fake_crew_announcement/enable(var/mob/user = usr)
+/obj/item/device/uplink_service/fake_crew_announcement/enable(mob/user = usr)
 
 	var/datum/computer_file/report/crew_record/random_record
 	var/obj/item/card/id/I = user.GetIdCard()
@@ -315,7 +315,7 @@
 	var/datum/job/job = SSjobs.get_by_title(new_record.get_job())
 	if(job)
 		var/skills = list()
-		for(var/decl/hierarchy/skill/S in GLOB.skills)
+		for(var/singleton/hierarchy/skill/S in GLOB.skills)
 			var/level = job.min_skill[S.type]
 			if(prob(10))
 				level = min(rand(1,3), job.max_skill[S.type])

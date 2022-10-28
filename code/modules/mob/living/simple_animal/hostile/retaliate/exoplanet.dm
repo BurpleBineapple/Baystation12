@@ -13,7 +13,7 @@
 		ai_holder.hostile = FALSE
 	else
 		for(var/mob/living/simple_animal/S in range(src,1))
-			if(S.stat == DEAD)
+			if(S.stat == DEAD && S != src)
 				visible_message("[src] consumes \the body of [S]!")
 				var/turf/T = get_turf(S)
 				var/obj/item/remains/xeno/X = new(T)
@@ -44,9 +44,9 @@
 			newname = sanitizeName(newname, allow_numbers = TRUE, force_first_letter_uppercase = FALSE)
 			if(newname && CanInteract(usr, GLOB.conscious_state))
 				if(E.rename_species(type, newname))
-					to_chat(usr,"<span class='notice'>This species will be known from now on as '[newname]'.</span>")
+					to_chat(usr,SPAN_NOTICE("This species will be known from now on as '[newname]'."))
 				else
-					to_chat(usr,"<span class='warning'>This species has already been named!</span>")
+					to_chat(usr,SPAN_WARNING("This species has already been named!"))
 			return
 
 /mob/living/simple_animal/hostile/retaliate/beast/samak
@@ -168,6 +168,8 @@
 
 	ai_holder = /datum/ai_holder/simple_animal/retaliate/royalcrab
 	say_list = /datum/say_list/royalcrab
+	meat_type = /obj/item/reagent_containers/food/snacks/shellfish/crab
+	meat_amount = 3
 
 /mob/living/simple_animal/hostile/retaliate/beast/charbaby
 	name = "charbaby"
@@ -204,13 +206,13 @@
 			L.IgniteMob()
 /obj/item/natural_weapon/charbaby
 	name = "scalding hide"
-	damtype = BURN
+	damtype = DAMAGE_BURN
 	force = 5
 	attack_verb = list("singed")
 
 /mob/living/simple_animal/hostile/retaliate/beast/charbaby/attack_hand(mob/living/carbon/human/H)
 	. = ..()
-	reflect_unarmed_damage(H, BURN, "amorphous mass")
+	reflect_unarmed_damage(H, DAMAGE_BURN, "amorphous mass")
 
 /mob/living/simple_animal/hostile/retaliate/beast/shantak/lava
 	desc = "A vaguely canine looking beast. It looks as though its fur is made of stone wool."

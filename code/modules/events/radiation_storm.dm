@@ -48,7 +48,7 @@
 	for(var/z in affecting_z)
 		SSradiation.z_radiate(locate(1, 1, z), radiation_level, 1)
 
-	for(var/mob/living/carbon/C in GLOB.living_mob_list_)
+	for(var/mob/living/carbon/C in GLOB.alive_mobs)
 		var/area/A = get_area(C)
 		if(!A)
 			continue
@@ -56,7 +56,7 @@
 			continue
 		if(istype(C,/mob/living/carbon/human))
 			var/mob/living/carbon/human/H = C
-			if(prob(5 * (1 - H.get_blocked_ratio(null, IRRADIATE, damage_flags = DAM_DISPERSED, armor_pen = radiation_level))))
+			if(prob(5 * (1 - H.get_blocked_ratio(null, DAMAGE_RADIATION, damage_flags = DAMAGE_FLAG_DISPERSED, armor_pen = radiation_level))))
 				if (prob(75))
 					randmutb(H) // Applies bad mutation
 					domutcheck(H,null,MUTCHK_FORCED)

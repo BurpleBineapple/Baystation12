@@ -90,7 +90,7 @@
 						highjob = " as [player.client.prefs.job_high]"
 					if (!player.is_stealthed())
 						var/can_see_hidden = check_rights(R_INVESTIGATE, 0)
-						var/datum/game_mode/mode = config.pick_mode(SSticker.master_mode)
+						var/datum/game_mode/mode = SSticker.pick_mode(SSticker.master_mode)
 						var/list/readied_antag_roles = list()
 						if (mode && can_see_hidden)
 							for (var/role in player.client.prefs.be_special_role)
@@ -129,7 +129,7 @@
 
 	if(href_list["observe"])
 		if(GAME_STATE < RUNLEVEL_LOBBY)
-			to_chat(src, "<span class='warning'>Please wait for server initialization to complete...</span>")
+			to_chat(src, SPAN_WARNING("Please wait for server initialization to complete..."))
 			return
 
 		if(!config.respawn_delay || client.holder || alert(src,"Are you sure you wish to observe? You will have to wait [config.respawn_delay] minute\s before being able to respawn!","Player Setup","Yes","No") == "Yes")
@@ -144,10 +144,10 @@
 			close_spawn_windows()
 			var/obj/O = locate("landmark*Observer-Start")
 			if(istype(O))
-				to_chat(src, "<span class='notice'>Now teleporting.</span>")
+				to_chat(src, SPAN_NOTICE("Now teleporting."))
 				observer.forceMove(O.loc)
 			else
-				to_chat(src, "<span class='danger'>Could not locate an observer spawn point. Use the Teleport verb to jump to the map.</span>")
+				to_chat(src, SPAN_DANGER("Could not locate an observer spawn point. Use the Teleport verb to jump to the map."))
 			observer.timeofdeath = world.time // Set the time of death so that the respawn timer works correctly.
 
 			var/should_announce = client.get_preference_value(/datum/client_preference/announce_ghost_join) == GLOB.PREF_YES
@@ -160,8 +160,6 @@
 			observer.set_appearance(mannequin)
 			qdel(mannequin)
 
-			if(client.prefs.be_random_name)
-				client.prefs.real_name = random_name(client.prefs.gender)
 			observer.real_name = client.prefs.real_name
 			observer.SetName(observer.real_name)
 			if(!client.holder && !config.antag_hud_allowed)           // For new ghosts we remove the verb from even showing up if it's not allowed.
@@ -205,15 +203,15 @@
 	else if(!href_list["late_join"])
 		new_player_panel()
 
-/mob/new_player/proc/AttemptLateSpawn(var/datum/job/job, var/spawning_at)
+/mob/new_player/proc/AttemptLateSpawn(datum/job/job, spawning_at)
 
 	if(src != usr)
 		return 0
 	if(GAME_STATE != RUNLEVEL_GAME)
-		to_chat(usr, "<span class='warning'>The round is either not ready, or has already finished...</span>")
+		to_chat(usr, SPAN_WARNING("The round is either not ready, or has already finished..."))
 		return 0
 	if(!config.enter_allowed)
-		to_chat(usr, "<span class='notice'>There is an administrative lock on entering the game!</span>")
+		to_chat(usr, SPAN_NOTICE("There is an administrative lock on entering the game!"))
 		return 0
 
 	if(!job || !job.is_available(client))
@@ -283,7 +281,7 @@
 	qdel(src)
 
 
-/mob/new_player/proc/AnnounceCyborg(var/mob/living/character, var/rank, var/join_message)
+/mob/new_player/proc/AnnounceCyborg(mob/living/character, rank, join_message)
 	if (GAME_STATE == RUNLEVEL_GAME)
 		if(character.mind.role_alt_title)
 			rank = character.mind.role_alt_title
@@ -291,19 +289,19 @@
 		GLOB.global_announcer.autosay("A new[rank ? " [rank]" : " visitor" ] [join_message ? join_message : "has arrived"].", "Arrivals Announcement Computer")
 
 /mob/new_player/proc/LateChoices()
-	var/name = client.prefs.be_random_name ? "friend" : client.prefs.real_name
+	var/name = client.prefs.real_name
 
 	var/list/header = list("<html><body><center>")
 	header += "<b>Welcome, [name].<br></b>"
 	header += "Round Duration: [roundduration2text()]<br>"
 
 	if(evacuation_controller.has_evacuated())
-		header += "<font color='red'><b>\The [station_name()] has been evacuated.</b></font><br>"
+		header += "[SPAN_COLOR("red", "<b>\The [station_name()] has been evacuated.</b>")]<br>"
 	else if(evacuation_controller.is_evacuating())
 		if(evacuation_controller.emergency_evacuation) // Emergency shuttle is past the point of no recall
-			header += "<font color='red'>\The [station_name()] is currently undergoing evacuation procedures.</font><br>"
+			header += "[SPAN_COLOR("red", "\The [station_name()] is currently undergoing evacuation procedures.")]<br>"
 		else                                           // Crew transfer initiated
-			header += "<font color='red'>\The [station_name()] is currently undergoing crew transfer procedures.</font><br>"
+			header += "[SPAN_COLOR("red", "\The [station_name()] is currently undergoing crew transfer procedures.")]<br>"
 
 	var/list/dat = list()
 	dat += "Choose from the following open/valid positions:<br>"
@@ -359,7 +357,7 @@
 	dat = header + dat
 	show_browser(src, jointext(dat, null), "window=latechoices;size=450x640;can_close=1")
 
-/mob/new_player/proc/create_character(var/turf/spawn_turf)
+/mob/new_player/proc/create_character(turf/spawn_turf)
 	spawning = 1
 	close_spawn_windows()
 
@@ -432,7 +430,7 @@
 	close_browser(src, "window=latechoices") //closes late choices window
 	panel.close()
 
-/mob/new_player/proc/check_species_allowed(datum/species/S, var/show_alert=1)
+/mob/new_player/proc/check_species_allowed(datum/species/S, show_alert=1)
 	if(!S.is_available_for_join() && !has_admin_rights())
 		if(show_alert)
 			to_chat(src, alert("Your current species, [client.prefs.species], is not available for play."))
@@ -460,23 +458,23 @@
 /mob/new_player/is_ready()
 	return ready && ..()
 
-/mob/new_player/hear_say(var/message, var/verb = "says", var/datum/language/language = null, var/alt_name = "",var/italics = 0, var/mob/speaker = null)
+/mob/new_player/hear_say(message, verb = "says", datum/language/language = null, alt_name = "",italics = 0, mob/speaker = null)
 	return
 
-/mob/new_player/hear_radio(var/message, var/verb="says", var/datum/language/language=null, var/part_a, var/part_b, var/part_c, var/mob/speaker = null, var/hard_to_hear = 0)
+/mob/new_player/hear_radio(message, verb="says", datum/language/language=null, part_a, part_b, part_c, mob/speaker = null, hard_to_hear = 0)
 	return
 
 /mob/new_player/show_message(msg, type, alt, alt_type)
 	return
 
-mob/new_player/MayRespawn()
+/mob/new_player/MayRespawn()
 	return 1
 
 /mob/new_player/touch_map_edge()
 	return
 
-/mob/new_player/say(var/message)
-	sanitize_and_communicate(/decl/communication_channel/ooc, client, message)
+/mob/new_player/say(message)
+	sanitize_and_communicate(/singleton/communication_channel/ooc, client, message)
 
 /mob/new_player/verb/next_lobby_track()
 	set name = "Play Different Lobby Track"
@@ -484,6 +482,6 @@ mob/new_player/MayRespawn()
 
 	if(get_preference_value(/datum/client_preference/play_lobby_music) == GLOB.PREF_NO)
 		return
-	var/decl/audio/track/track = GLOB.using_map.get_lobby_track(GLOB.using_map.lobby_track.type)
+	var/singleton/audio/track/track = GLOB.using_map.get_lobby_track(GLOB.using_map.lobby_track.type)
 	sound_to(src, track.get_sound())
 	to_chat(src, track.get_info())

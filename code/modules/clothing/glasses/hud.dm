@@ -17,11 +17,11 @@
 	toggle_on_message = "\The [src] boots up to life, flashing with information."
 	toggle_off_message = "\The [src] powers down with a beep."
 
-/obj/item/clothing/glasses/proc/process_hud(var/mob/M)
+/obj/item/clothing/glasses/proc/process_hud(mob/M)
 	if(hud)
 		hud.process_hud(M)
 
-/obj/item/clothing/glasses/hud/process_hud(var/mob/M)
+/obj/item/clothing/glasses/hud/process_hud(mob/M)
 	return
 
 /obj/item/clothing/glasses/hud/health
@@ -33,7 +33,7 @@
 	body_parts_covered = 0
 	req_access = list(access_medical)
 
-/obj/item/clothing/glasses/hud/health/process_hud(var/mob/M)
+/obj/item/clothing/glasses/hud/health/process_hud(mob/M)
 	process_med_hud(M, 1)
 
 /obj/item/clothing/glasses/hud/health/prescription
@@ -63,7 +63,7 @@
 	off_state = "securityhud_off"
 	hud_type = HUD_SECURITY
 	body_parts_covered = 0
-	var/global/list/jobs[0]
+	var/static/list/jobs[0]
 	req_access = list(access_security)
 
 /obj/item/clothing/glasses/hud/security/prescription
@@ -85,7 +85,7 @@
 	see_invisible = SEE_INVISIBLE_NOLIGHTING
 
 
-/obj/item/clothing/glasses/hud/security/process_hud(var/mob/M)
+/obj/item/clothing/glasses/hud/security/process_hud(mob/M)
 	process_sec_hud(M, 1)
 
 /obj/item/clothing/glasses/hud/security/prot
@@ -94,6 +94,7 @@
 	icon_state = "secgoggles"
 	off_state = "degoggles"
 	flash_protection = FLASH_PROTECTION_MODERATE
+	body_parts_covered = EYES
 
 /obj/item/clothing/glasses/hud/security/prot/prescription
 	prescription = 5
@@ -104,7 +105,7 @@
 	desc = "Glasses with a SECHUD and polarization toggle."
 	icon_state = "sunhud"
 	off_state = "sunhud_off"
-
+	body_parts_covered = null
 
 /obj/item/clothing/glasses/hud/security/prot/sunglasses/prescription
 	prescription = 5
@@ -115,6 +116,7 @@
 	desc = "Aviators with a SECHUD and polarization toggle."
 	icon_state = "sec_avi_on"
 	off_state = "sec_avi_off"
+	body_parts_covered = null
 
 /obj/item/clothing/glasses/hud/security/prot/aviators/prescription
 	prescription = 5
@@ -136,7 +138,7 @@
 	desc = "A janitor HUD integrated with a set of prescription glasses."
 	prescription = 5
 
-/obj/item/clothing/glasses/hud/janitor/process_hud(var/mob/M)
+/obj/item/clothing/glasses/hud/janitor/process_hud(mob/M)
 	process_jani_hud(M)
 
 /obj/item/clothing/glasses/hud/science

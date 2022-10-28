@@ -30,7 +30,7 @@
 			return
 		do_insert_ai(user, W)
 		return TRUE
-	if(isScrewdriver(W))
+	if(isScrewdriver(W) && stored_card)
 		to_chat(user, "You manually remove \the [stored_card] from \the [src].")
 		do_eject_ai(user)
 		return TRUE
@@ -49,7 +49,7 @@
 		user = usr
 
 	if(!CanPhysicallyInteract(user))
-		to_chat(user, "<span class='warning'>You can't reach it.</span>")
+		to_chat(user, SPAN_WARNING("You can't reach it."))
 		return
 
 	var/obj/item/stock_parts/computer/ai_slot/device = src

@@ -48,7 +48,7 @@
 			if(!eggcount)
 				var/eggs = new egg_type(O, src)
 				O.implants += eggs
-				to_chat(H, "<span class='critical'>\The [src] injects something into your [O.name]!</span>") // Oh god its laying eggs in me!
+				to_chat(H, SPAN_CLASS("critical", "\The [src] injects something into your [O.name]!")) // Oh god its laying eggs in me!
 
 // Webs target in a web if able to.
 /mob/living/simple_animal/hostile/giant_spider/nurse/attack_target(atom/A)
@@ -85,7 +85,7 @@
 	// Get our AI to stay still.
 	set_AI_busy(TRUE)
 
-	if(!do_after(src, 5 SECONDS, AM))
+	if(!do_after(src, 5 SECONDS, AM, DO_DEFAULT | DO_USER_UNIQUE_ACT | DO_PUBLIC_PROGRESS))
 		set_AI_busy(FALSE)
 		return FALSE
 
@@ -132,7 +132,7 @@
 	// Get our AI to stay still.
 	set_AI_busy(TRUE)
 
-	if(!do_after(src, 5 SECONDS, T))
+	if(!do_after(src, 5 SECONDS, T, DO_DEFAULT | DO_USER_UNIQUE_ACT | DO_PUBLIC_PROGRESS))
 		set_AI_busy(FALSE)
 		return FALSE
 
@@ -162,7 +162,7 @@
 	// Stop players from spamming eggs.
 	laying_eggs = TRUE
 
-	if(!do_after(src, 5 SECONDS, T))
+	if(!do_after(src, 5 SECONDS, T, DO_DEFAULT | DO_USER_UNIQUE_ACT | DO_PUBLIC_PROGRESS))
 		set_AI_busy(FALSE)
 		return FALSE
 

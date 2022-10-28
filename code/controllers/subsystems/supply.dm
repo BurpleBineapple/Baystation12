@@ -29,15 +29,14 @@ SUBSYSTEM_DEF(supply)
 		"total" = "Total" // If you're adding additional point sources, add it here in a new line. Don't forget to put a comma after the old last line.
 	)
 
-/datum/controller/subsystem/supply/Initialize()
-	. = ..()
+/datum/controller/subsystem/supply/Initialize(start_uptime)
 	ordernum = rand(1,9000)
 
 	//Build master supply list
-	var/decl/hierarchy/supply_pack/root = decls_repository.get_decl(/decl/hierarchy/supply_pack)
-	for(var/decl/hierarchy/supply_pack/sp in root.children)
+	var/singleton/hierarchy/supply_pack/root = GET_SINGLETON(/singleton/hierarchy/supply_pack)
+	for(var/singleton/hierarchy/supply_pack/sp in root.children)
 		if(sp.is_category())
-			for(var/decl/hierarchy/supply_pack/spc in sp.get_descendents())
+			for(var/singleton/hierarchy/supply_pack/spc in sp.get_descendents())
 				spc.setup()
 				master_supply_list += spc
 
@@ -86,7 +85,7 @@ SUBSYSTEM_DEF(supply)
 		for(var/atom/movable/AM in subarea)
 			if(AM.anchored)
 				continue
-			if(istype(AM, /obj/structure/closet/crate/))
+			if(istype(AM, /obj/structure/closet/crate))
 				var/obj/structure/closet/crate/CR = AM
 				callHook("sell_crate", list(CR, subarea))
 				add_points_from_source(CR.points_per_crate, "crate")
@@ -155,7 +154,7 @@ SUBSYSTEM_DEF(supply)
 		donelist += S
 
 		var/datum/supply_order/SO = S
-		var/decl/hierarchy/supply_pack/SP = SO.object
+		var/singleton/hierarchy/supply_pack/SP = SO.object
 
 		var/obj/A = new SP.containertype(pickedloc)
 		A.SetName("[SP.containername][SO.comment ? " ([SO.comment])":"" ]")
@@ -188,7 +187,7 @@ SUBSYSTEM_DEF(supply)
 			slip.info += "</ul><br>CHECK CONTENTS AND STAMP BELOW THE LINE TO CONFIRM RECEIPT OF GOODS<hr>"
 
 // Adds any given item to the supply shuttle
-/datum/controller/subsystem/supply/proc/addAtom(var/atom/movable/A)
+/datum/controller/subsystem/supply/proc/addAtom(atom/movable/A)
 	var/list/clear_turfs = get_clear_turfs()
 	if(!clear_turfs.len)
 		return FALSE
@@ -201,7 +200,7 @@ SUBSYSTEM_DEF(supply)
 
 /datum/supply_order
 	var/ordernum
-	var/decl/hierarchy/supply_pack/object = null
+	var/singleton/hierarchy/supply_pack/object = null
 	var/orderedby = null
 	var/comment = null
 	var/reason = null

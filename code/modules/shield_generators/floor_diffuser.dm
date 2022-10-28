@@ -9,10 +9,10 @@
 	anchored = TRUE
 	density = FALSE
 	level = 1
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
-	
+
 	machine_name = "shield diffuser"
 	machine_desc = "These floor-mounted devices prevent formation of shields above them, and are typically placed near front of external airlocks."
 
@@ -37,7 +37,7 @@
 	if(alarm)
 		icon_state = "fdiffuser_emergency"
 		return
-	if((stat & (NOPOWER | BROKEN)) || !enabled)
+	if(inoperable() || !enabled)
 		icon_state = "fdiffuser_off"
 	else
 		icon_state = "fdiffuser_on"
@@ -56,7 +56,7 @@
 	to_chat(user, "You turn \the [src] [enabled ? "on" : "off"].")
 	return TRUE
 
-/obj/machinery/shield_diffuser/proc/meteor_alarm(var/duration)
+/obj/machinery/shield_diffuser/proc/meteor_alarm(duration)
 	if(!duration)
 		return
 	alarm = round(max(alarm, duration))

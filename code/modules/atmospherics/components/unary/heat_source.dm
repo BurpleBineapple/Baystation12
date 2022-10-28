@@ -11,10 +11,10 @@
 	use_power = POWER_USE_OFF
 	idle_power_usage = 5			//5 Watts for thermostat related circuitry
 	base_type = /obj/machinery/atmospherics/unary/heater
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
-	
+
 	machine_name = "gas heating system"
 	machine_desc = "While active, this machine increases the temperature of a connected gas line to the configured amount. Gas pressure increases with heat."
 
@@ -64,7 +64,7 @@
 /obj/machinery/atmospherics/unary/heater/Process()
 	..()
 
-	if(stat & (NOPOWER|BROKEN) || !use_power)
+	if(inoperable() || !use_power)
 		heating = 0
 		update_icon()
 		return
@@ -84,7 +84,7 @@
 	ui_interact(user)
 	return TRUE
 
-/obj/machinery/atmospherics/unary/heater/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/atmospherics/unary/heater/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	// this is the data which will be sent to the ui
 	var/data[0]
 	data["on"] = use_power ? 1 : 0
@@ -142,7 +142,7 @@
 	air_contents.volume = max(initial(internal_volume) - 200, 0) + 200 * bin_rating
 	set_power_level(power_setting)
 
-/obj/machinery/atmospherics/unary/heater/proc/set_power_level(var/new_power_setting)
+/obj/machinery/atmospherics/unary/heater/proc/set_power_level(new_power_setting)
 	power_setting = new_power_setting
 	power_rating = max_power_rating * (power_setting/100)
 

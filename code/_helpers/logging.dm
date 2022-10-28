@@ -3,7 +3,7 @@
 // will get logs that are one big line if the system is Linux and they are using notepad.  This solves it by adding CR to every line ending
 // in the logs.  ascii character 13 = CR
 
-/var/global/log_end= world.system_type == UNIX ? ascii2text(13) : ""
+var/global/log_end= world.system_type == UNIX ? ascii2text(13) : ""
 
 
 /proc/error(msg)
@@ -30,7 +30,7 @@
 	to_world_log("## TESTING: [msg][log_end]")
 
 /proc/game_log(category, text)
-	to_file(GLOB.diary, "\[[time_stamp()]] [game_id] [category]: [text][log_end]")
+	to_file(global.diary, "\[[time_stamp()]] [game_id] [category]: [text][log_end]")
 
 /proc/log_admin(text)
 	GLOB.admin_log.Add(text)
@@ -117,7 +117,7 @@
 		game_log("DD_OUTPUT", text)
 
 //pretty print a direction bitflag, can be useful for debugging.
-/proc/dir_text(var/dir)
+/proc/dir_text(dir)
 	var/list/comps = list()
 	if(dir & NORTH) comps += "NORTH"
 	if(dir & SOUTH) comps += "SOUTH"
@@ -129,7 +129,7 @@
 	return english_list(comps, nothing_text="0", and_text="|", comma_text="|")
 
 //more or less a logging utility
-/proc/key_name(var/whom, var/include_link = null, var/include_name = 1, var/highlight_special_characters = 1, var/datum/ticket/ticket = null)
+/proc/key_name(whom, include_link = null, include_name = 1, highlight_special_characters = 1, datum/ticket/ticket = null)
 	var/mob/M
 	var/client/C
 	var/key
@@ -179,13 +179,13 @@
 
 
 		if(is_special_character(M) && highlight_special_characters)
-			. += "/(<font color='#ffa500'>[name]</font>)" //Orange
+			. += "/([SPAN_COLOR("#ffa500", name)])" //Orange
 		else
 			. += "/([name])"
 
 	return .
 
-/proc/key_name_admin(var/whom, var/include_name = 1)
+/proc/key_name_admin(whom, include_name = 1)
 	return key_name(whom, 1, include_name)
 
 // Helper procs for building detailed log lines
@@ -205,7 +205,7 @@
 /mob/get_log_info_line()
 	return ckey ? "[..()] ([ckey])" : ..()
 
-/proc/log_info_line(var/datum/d)
+/proc/log_info_line(datum/d)
 	if(isnull(d))
 		return "*null*"
 	if(islist(d))
@@ -219,6 +219,6 @@
 		return json_encode(d)
 	return d.get_log_info_line()
 
-/proc/report_progress(var/progress_message)
-	admin_notice("<span class='boldannounce'>[progress_message]</span>", R_DEBUG)
+/proc/report_progress(progress_message)
+	admin_notice(SPAN_CLASS("boldannounce", "[progress_message]"), R_DEBUG)
 	to_world_log(progress_message)

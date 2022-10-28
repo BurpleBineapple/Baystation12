@@ -15,12 +15,12 @@ SUBSYSTEM_DEF(mapping)
 	return
 
 
-/datum/controller/subsystem/mapping/Initialize(timeofday)
+/datum/controller/subsystem/mapping/Initialize(start_uptime)
 	// Load templates and build away sites.
 	preloadTemplates()
-	for(var/atype in subtypesof(/decl/submap_archetype))
+	for(var/atype in subtypesof(/singleton/submap_archetype))
 		submap_archetypes[atype] = new atype
-	. = ..()
+
 
 /datum/controller/subsystem/mapping/Recover()
 	flags |= SS_NO_INIT
@@ -57,7 +57,7 @@ SUBSYSTEM_DEF(mapping)
 		if (banned_maps)
 			var/is_banned = FALSE
 			for (var/mappath in MT.mappaths)
-				if(list_find(banned_maps, mappath))
+				if(banned_maps.Find(mappath))
 					is_banned = TRUE
 					break
 			if (is_banned)

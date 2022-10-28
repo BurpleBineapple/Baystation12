@@ -26,7 +26,7 @@
 	var/list/charge_costs = null
 	var/list/datum/matter_synth/synths = null
 
-/obj/item/stack/New(var/loc, var/amount=null)
+/obj/item/stack/New(loc, amount=null)
 	if (!stacktype)
 		stacktype = type
 	if (amount >= 1)
@@ -93,8 +93,8 @@
 			title+= " ([R.req_amount] [src.singular_name]\s)"
 			var/skill_label = ""
 			if(!user.skill_check(SKILL_CONSTRUCTION, R.difficulty))
-				var/decl/hierarchy/skill/S = decls_repository.get_decl(SKILL_CONSTRUCTION)
-				skill_label = "<font color='red'>\[[S.levels[R.difficulty]]]</font>"
+				var/singleton/hierarchy/skill/S = GET_SINGLETON(SKILL_CONSTRUCTION)
+				skill_label = SPAN_COLOR("red", "\[[S.levels[R.difficulty]]\]")
 			if (can_build)
 				t1 +="[skill_label]<A href='?src=\ref[src];sublist=[recipes_sublist];make=[i];multiplier=1'>[title]</A>"
 			else
@@ -113,33 +113,33 @@
 	show_browser(user, JOINTEXT(t1), "window=stack")
 	onclose(user, "stack")
 
-/obj/item/stack/proc/produce_recipe(datum/stack_recipe/recipe, var/quantity, mob/user)
+/obj/item/stack/proc/produce_recipe(datum/stack_recipe/recipe, quantity, mob/user)
 	var/required = quantity*recipe.req_amount
 	var/produced = min(quantity*recipe.res_amount, recipe.max_res_amount)
 
 	var/area/A = get_area(user)
 	if (!A.can_modify_area())
-		visible_message("You can't seem to make anything with \the [src] here.")
+		to_chat(user, SPAN_WARNING("You can't seem to make anything with \the [src] here."))
 		return
 
 	if (!can_use(required))
 		if (produced>1)
-			to_chat(user, "<span class='warning'>You haven't got enough [src] to build \the [produced] [recipe.display_name()]\s!</span>")
+			to_chat(user, SPAN_WARNING("You haven't got enough [src] to build \the [produced] [recipe.display_name()]\s!"))
 		else
-			to_chat(user, "<span class='warning'>You haven't got enough [src] to build \the [recipe.display_name()]!</span>")
+			to_chat(user, SPAN_WARNING("You haven't got enough [src] to build \the [recipe.display_name()]!"))
 		return
 
 	if(!recipe.can_make(user))
 		return
 
 	if (recipe.time)
-		to_chat(user, "<span class='notice'>Building [recipe.display_name()] ...</span>")
-		if (!user.do_skilled(recipe.time, SKILL_CONSTRUCTION))
+		to_chat(user, SPAN_NOTICE("Building [recipe.display_name()] ..."))
+		if (!user.do_skilled(recipe.time, SKILL_CONSTRUCTION, src, do_flags = DO_REPAIR_CONSTRUCT))
 			return
 
 	if (use(required))
 		if(user.skill_fail_prob(SKILL_CONSTRUCTION, 90, recipe.difficulty))
-			to_chat(user, "<span class='warning'>You waste some [name] and fail to build \the [recipe.display_name()]!</span>")
+			to_chat(user, SPAN_WARNING("You waste some [name] and fail to build \the [recipe.display_name()]!"))
 			return
 		var/atom/O = recipe.spawn_result(user, user.loc, produced)
 		O.add_fingerprint(user)
@@ -177,12 +177,12 @@
 
 //Return 1 if an immediate subsequent call to use() would succeed.
 //Ensures that code dealing with stacks uses the same logic
-/obj/item/stack/proc/can_use(var/used)
+/obj/item/stack/proc/can_use(used)
 	if (get_amount() < used)
 		return 0
 	return 1
 
-/obj/item/stack/proc/use(var/used)
+/obj/item/stack/proc/use(used)
 	if (!can_use(used))
 		return 0
 	if(!uses_charge)
@@ -200,7 +200,7 @@
 			S.use_charge(charge_costs[i] * used) // Doesn't need to be deleted
 		return 1
 
-/obj/item/stack/proc/add(var/extra)
+/obj/item/stack/proc/add(extra)
 	if(!uses_charge)
 		if(amount + extra > get_max_amount())
 			return 0
@@ -222,7 +222,7 @@
 */
 
 //attempts to transfer amount to S, and returns the amount actually transferred
-/obj/item/stack/proc/transfer_to(obj/item/stack/S, var/tamount=null, var/type_verified)
+/obj/item/stack/proc/transfer_to(obj/item/stack/S, tamount=null, type_verified)
 	if (!get_amount())
 		return 0
 	if ((stacktype != S.stacktype) && !type_verified)
@@ -241,7 +241,7 @@
 	return 0
 
 //creates a new stack with the specified amount
-/obj/item/stack/proc/split(var/tamount)
+/obj/item/stack/proc/split(tamount)
 	if (!amount)
 		return null
 
@@ -260,7 +260,7 @@
 		return newstack
 	return null
 
-/obj/item/stack/proc/copy_from(var/obj/item/stack/other)
+/obj/item/stack/proc/copy_from(obj/item/stack/other)
 	color = other.color
 
 /obj/item/stack/proc/get_amount()
@@ -292,18 +292,16 @@
 /obj/item/stack/proc/add_to_stacks(mob/user, check_hands)
 	var/list/stacks = list()
 	if(check_hands)
-		if(isstack(user.l_hand))
-			stacks += user.l_hand
-		if(isstack(user.r_hand))
-			stacks += user.r_hand
+		for (var/obj/item/stack/stack as anything in user.GetAllHeld(/obj/item/stack))
+			stacks += stack
 	for (var/obj/item/stack/item in user.loc)
-		stacks += item
+		stacks |= item
 	for (var/obj/item/stack/item in stacks)
 		if (item==src)
 			continue
 		var/transfer = src.transfer_to(item)
 		if (transfer)
-			to_chat(user, "<span class='notice'>You add a new [item.singular_name] to the stack. It now contains [item.amount] [item.singular_name]\s.</span>")
+			to_chat(user, SPAN_NOTICE("You add a new [item.singular_name] to the stack. It now contains [item.amount] [item.singular_name]\s."))
 		if(!amount)
 			break
 
@@ -359,7 +357,7 @@
 	var/send_material_data = 0 //Whether the recipe will send the material name as an argument when creating product.
 	var/apply_material_name = 1 //Whether the recipe will prepend a material name to the title - 'steel clipboard' vs 'clipboard'
 
-/datum/stack_recipe/New(material/material, var/reinforce_material)
+/datum/stack_recipe/New(material/material, reinforce_material)
 	if(material)
 		use_material = material.name
 		difficulty += material.construction_difficulty
@@ -384,12 +382,12 @@
 
 /datum/stack_recipe/proc/can_make(mob/user)
 	if (one_per_turf && (locate(result_type) in user.loc))
-		to_chat(user, "<span class='warning'>There is another [display_name()] here!</span>")
+		to_chat(user, SPAN_WARNING("There is another [display_name()] here!"))
 		return FALSE
 
 	var/turf/T = get_turf(user.loc)
 	if (on_floor && !T.is_floor())
-		to_chat(user, "<span class='warning'>\The [display_name()] must be constructed on the floor!</span>")
+		to_chat(user, SPAN_WARNING("\The [display_name()] must be constructed on the floor!"))
 		return FALSE
 
 	return TRUE

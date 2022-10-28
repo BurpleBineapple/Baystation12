@@ -10,23 +10,23 @@
 //similar to weeds, but only barfed out by nurses manually
 /obj/effect/spider/ex_act(severity)
 	switch(severity)
-		if(1.0)
+		if(EX_ACT_DEVASTATING)
 			qdel(src)
-		if(2.0)
+		if(EX_ACT_HEAVY)
 			if (prob(50))
 				qdel(src)
-		if(3.0)
+		if(EX_ACT_LIGHT)
 			if (prob(5))
 				qdel(src)
 	return
 
-/obj/effect/spider/attackby(var/obj/item/W, var/mob/user)
+/obj/effect/spider/attackby(obj/item/W, mob/user)
 	user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
 
 	if(W.attack_verb.len)
-		visible_message("<span class='warning'>\The [src] have been [pick(W.attack_verb)] with \the [W][(user ? " by [user]." : ".")]</span>")
+		visible_message(SPAN_WARNING("\The [src] have been [pick(W.attack_verb)] with \the [W][(user ? " by [user]." : ".")]"))
 	else
-		visible_message("<span class='warning'>\The [src] have been attacked with \the [W][(user ? " by [user]." : ".")]</span>")
+		visible_message(SPAN_WARNING("\The [src] have been attacked with \the [W][(user ? " by [user]." : ".")]"))
 
 	var/damage = W.force / 4.0
 
@@ -43,7 +43,7 @@
 	health -= damage
 	healthcheck()
 
-/obj/effect/spider/bullet_act(var/obj/item/projectile/Proj)
+/obj/effect/spider/bullet_act(obj/item/projectile/Proj)
 	..()
 	health -= Proj.get_structure_damage()
 	healthcheck()
@@ -71,7 +71,7 @@
 		return 1
 	else if(istype(mover, /mob/living))
 		if(prob(50))
-			to_chat(mover, "<span class='warning'>You get stuck in \the [src] for a moment.</span>")
+			to_chat(mover, SPAN_WARNING("You get stuck in \the [src] for a moment."))
 			return 0
 	else if(istype(mover, /obj/item/projectile))
 		return prob(30)
@@ -139,14 +139,14 @@
 
 	var/shift_range = 6
 	var/castes = list(/mob/living/simple_animal/hostile/giant_spider/lurker = 0.1,
-						/mob/living/simple_animal/hostile/giant_spider/tunneler = 0.08,
+						/mob/living/simple_animal/hostile/giant_spider/tunneler = 0.2,
 						/mob/living/simple_animal/hostile/giant_spider/pepper = 0.5,
 						/mob/living/simple_animal/hostile/giant_spider/webslinger = 1,
 						/mob/living/simple_animal/hostile/giant_spider/electric = 0.5,
 						/mob/living/simple_animal/hostile/giant_spider/thermic = 0.5,
 						/mob/living/simple_animal/hostile/giant_spider/frost = 0.5,
 						/mob/living/simple_animal/hostile/giant_spider/carrier = 2,
-						/mob/living/simple_animal/hostile/giant_spider/phorogenic = 0.01,
+						/mob/living/simple_animal/hostile/giant_spider/phorogenic = 0.4,
 						/mob/living/simple_animal/hostile/giant_spider = 2,
 						/mob/living/simple_animal/hostile/giant_spider/guard = 2,
 						/mob/living/simple_animal/hostile/giant_spider/nurse = 2,
@@ -157,7 +157,7 @@
 /obj/effect/spider/spiderling/frost
 	castes = list(/mob/living/simple_animal/hostile/giant_spider/frost = 1)
 
-/obj/effect/spider/spiderling/Initialize(var/mapload, var/atom/parent)
+/obj/effect/spider/spiderling/Initialize(mapload, atom/parent)
 	greater_form = pickweight(castes)
 	pixel_x = rand(-shift_range, shift_range)
 	pixel_y = rand(-shift_range, shift_range)
@@ -189,12 +189,12 @@
 	STOP_PROCESSING(SSobj, src)
 	. = ..()
 
-/obj/effect/spider/spiderling/attackby(var/obj/item/W, var/mob/user)
+/obj/effect/spider/spiderling/attackby(obj/item/W, mob/user)
 	..()
 	if(health > 0)
 		disturbed()
 
-/obj/effect/spider/spiderling/Crossed(var/mob/living/L)
+/obj/effect/spider/spiderling/Crossed(mob/living/L)
 	if(dormant && istype(L) && L.mob_size > MOB_TINY)
 		disturbed()
 
@@ -213,7 +213,7 @@
 		..()
 
 /obj/effect/spider/spiderling/proc/die()
-	visible_message("<span class='alert'>[src] dies!</span>")
+	visible_message(SPAN_CLASS("alert", "[src] dies!"))
 	new /obj/effect/decal/cleanable/spiderling_remains(loc)
 	qdel(src)
 
@@ -227,7 +227,7 @@
 		entry_vent = null
 		return TRUE
 
-/obj/effect/spider/spiderling/proc/start_vent_moving(obj/machinery/atmospherics/unary/vent_pump/exit_vent, var/travel_time)
+/obj/effect/spider/spiderling/proc/start_vent_moving(obj/machinery/atmospherics/unary/vent_pump/exit_vent, travel_time)
 	if(check_vent(exit_vent))
 		return
 	if(prob(50))
@@ -281,7 +281,7 @@
 				var/target_atom = pick(nearby)
 				walk_to(src, target_atom, 5)
 				if(prob(10))
-					src.visible_message("<span class='notice'>\The [src] skitters[pick(" away"," around","")].</span>")
+					src.visible_message(SPAN_NOTICE("\The [src] skitters[pick(" away"," around","")]."))
 					// Reduces the risk of spiderlings hanging out at the extreme ranges of the shift range.
 					var/min_x = pixel_x <= -shift_range ? 0 : -2
 					var/max_x = pixel_x >=  shift_range ? 0 :  2
@@ -308,17 +308,17 @@
 			amount_grown = 20 //reset amount_grown so that people have some time to react to spiderlings before they grow big
 			O.implants -= src
 			forceMove(O.owner ? O.owner.loc : O.loc)
-			src.visible_message("<span class='warning'>\A [src] emerges from inside [O.owner ? "[O.owner]'s [O.name]" : "\the [O]"]!</span>")
+			src.visible_message(SPAN_WARNING("\A [src] emerges from inside [O.owner ? "[O.owner]'s [O.name]" : "\the [O]"]!"))
 			if(O.owner)
-				O.owner.apply_damage(5, BRUTE, O.organ_tag)
-				O.owner.apply_damage(3, TOX, O.organ_tag)
+				O.owner.apply_damage(5, DAMAGE_BRUTE, O.organ_tag)
+				O.owner.apply_damage(3, DAMAGE_TOXIN, O.organ_tag)
 		else if(prob(1))
-			O.owner.apply_damage(1, TOX, O.organ_tag)
+			O.owner.apply_damage(1, DAMAGE_TOXIN, O.organ_tag)
 			if(world.time > last_itch + 30 SECONDS)
 				last_itch = world.time
-				to_chat(O.owner, "<span class='notice'>Your [O.name] itches...</span>")
+				to_chat(O.owner, SPAN_NOTICE("Your [O.name] itches..."))
 	else if(prob(1))
-		src.visible_message("<span class='notice'>\The [src] skitters.</span>")
+		src.visible_message(SPAN_NOTICE("\The [src] skitters."))
 
 	if(amount_grown > 0)
 		amount_grown += rand(0,2)
@@ -352,7 +352,7 @@
 					L.status_flags ^= NOTARGET
 
 /obj/effect/spider/cocoon/Destroy()
-	src.visible_message("<span class='warning'>\The [src] splits open.</span>")
+	src.visible_message(SPAN_WARNING("\The [src] splits open."))
 	for(var/atom/movable/A in contents)
 		A.dropInto(loc)
 		if (istype(A, /mob/living))

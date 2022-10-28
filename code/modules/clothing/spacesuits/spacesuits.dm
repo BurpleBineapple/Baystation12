@@ -17,6 +17,7 @@
 		bio = ARMOR_BIO_SHIELDED,
 		rad = ARMOR_RAD_SMALL
 		)
+	valid_accessory_slots = null
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE|BLOCKHAIR
 	body_parts_covered = HEAD|FACE|EYES
 	cold_protection = HEAD
@@ -64,9 +65,9 @@
 		camera.set_status(!camera.status)
 		if(camera.status)
 			camera.c_tag = FindNameFromID(usr)
-			to_chat(usr, "<span class='notice'>User scanned as [camera.c_tag]. Camera activated.</span>")
+			to_chat(usr, SPAN_NOTICE("User scanned as [camera.c_tag]. Camera activated."))
 		else
-			to_chat(usr, "<span class='notice'>Camera deactivated.</span>")
+			to_chat(usr, SPAN_NOTICE("Camera deactivated."))
 
 /obj/item/clothing/head/helmet/space/examine(mob/user, distance)
 	. = ..()
@@ -140,7 +141,6 @@
 	species_restricted = list("exclude", SPECIES_NABBER, SPECIES_DIONA)
 	valid_accessory_slots = list(ACCESSORY_SLOT_INSIGNIA)
 	equip_delay = 5 SECONDS
-	equip_delay_flags = DO_DEFAULT | DO_USER_UNIQUE_ACT
 
 
 /obj/item/clothing/suit/space/equip_delay_before(mob/user, slot, equip_flags)
@@ -163,4 +163,4 @@
 
 /obj/item/clothing/suit/space/Initialize()
 	. = ..()
-	slowdown_per_slot[slot_wear_suit] = 1
+	slowdown_per_slot[slot_wear_suit] = 0.5

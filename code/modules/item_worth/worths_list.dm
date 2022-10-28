@@ -2,7 +2,7 @@
 //Mainly used so that stuff inside them can also add to their value, and other things like material,
 //stuff like that.
 
-var/list/worths = list(
+var/global/list/worths = list(
 //ROBOT ASSEMBLIES,
 					/obj/item/device/bot_kit = 300,
 //REAGENT CONTAINERS,
@@ -250,7 +250,7 @@ var/list/worths = list(
 					/obj/item/crowbar = 10,
 					/obj/item/beartrap = 35,
 					/obj/item/nullrod = 60,
-					/obj/item/weldpack = 300,
+					/obj/item/storage/backpack/weldpack = 300,
 					/obj/item/stock_parts/circuitboard/aicore = 6000,
 					/obj/item/stock_parts/circuitboard = 1000,
 //GRENADES,

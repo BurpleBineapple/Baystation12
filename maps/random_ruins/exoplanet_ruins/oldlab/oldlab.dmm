@@ -1404,8 +1404,7 @@
 /obj/effect/wallframe_spawn/reinforced/titanium,
 /obj/machinery/door/blast/shutters{
 	icon_state = "shutter0";
-	id_tag = "research_lab_shutters";
-	opacity = 0
+	id_tag = "research_lab_shutters"
 	},
 /obj/effect/paint/black,
 /turf/simulated/floor/tiled/techfloor/grid,
@@ -1516,8 +1515,7 @@
 /obj/effect/wallframe_spawn/reinforced/titanium,
 /obj/machinery/door/blast/shutters{
 	icon_state = "shutter0";
-	id_tag = "research_lab_shutters";
-	opacity = 0
+	id_tag = "research_lab_shutters"
 	},
 /obj/effect/paint/black,
 /turf/simulated/floor/tiled/techfloor/grid,
@@ -2280,8 +2278,7 @@
 /obj/machinery/door/blast/shutters{
 	dir = 4;
 	icon_state = "shutter0";
-	id_tag = "research_lab_shutters";
-	opacity = 0
+	id_tag = "research_lab_shutters"
 	},
 /obj/effect/paint/black,
 /turf/simulated/floor/tiled/techfloor/grid,
@@ -2412,7 +2409,7 @@
 "NB" = (
 /obj/structure/table/rack,
 /obj/item/stack/cable_coil/random,
-/obj/item/crowbar/brace_jack,
+/obj/item/material/twohanded/jack,
 /turf/simulated/floor/tiled/techfloor/grid,
 /area/map_template/oldlab/station/southairlock)
 "NO" = (
@@ -2736,8 +2733,7 @@
 /obj/machinery/door/blast/shutters{
 	dir = 4;
 	icon_state = "shutter0";
-	id_tag = "exterior_lab_shutters";
-	opacity = 0
+	id_tag = "exterior_lab_shutters"
 	},
 /obj/effect/paint/black,
 /turf/simulated/floor/tiled/techfloor/grid,

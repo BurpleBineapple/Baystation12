@@ -8,6 +8,7 @@
 	item_state = null
 	force = 0.2 //force of folded obj
 	max_force = 10
+	max_pen = 0
 	force_multiplier = 0.2
 	applies_material_colour = FALSE
 	applies_material_name = FALSE
@@ -39,10 +40,10 @@
 	update_force()
 	update_icon()
 	if(open)
-		user.visible_message("<span class='warning'>\The [user] opens \the [src].</span>")
+		user.visible_message(SPAN_WARNING("\The [user] opens \the [src]."))
 		playsound(user, 'sound/weapons/flipblade.ogg', 15, 1)
 	else
-		user.visible_message("<span class='notice'>\The [user] closes \the [src].</span>")
+		user.visible_message(SPAN_NOTICE("\The [user] closes \the [src]."))
 	add_fingerprint(user)
 
 /obj/item/material/knife/folding/update_force()
@@ -98,6 +99,7 @@
 	name = "the concept of a fighting knife in which the blade can be stowed in its own handle"
 	desc = "This is a master item - berate the admin or mapper who spawned this!"
 	max_force = 15
+	max_pen = 30
 	force_multiplier = 0.25
 	thrown_force_multiplier = 0.25
 	takes_colour = FALSE

@@ -9,10 +9,10 @@
 	idle_power_usage = 200		//internal circuitry, friction losses and stuff
 	power_rating = 10000
 	base_type = /obj/machinery/atmospherics/binary/oxyregenerator
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
-	
+
 	machine_name = "oxygen regenerator"
 	machine_desc = "Catalyzes gaseous CO2 to convert it into gaseous oxygen. The excess carbon is condensed and ejected as graphite sheets."
 
@@ -49,7 +49,7 @@
 	. = ..()
 	to_chat(user,"Its outlet port is to the [dir2text(dir)]")
 
-/obj/machinery/atmospherics/binary/oxyregenerator/attackby(var/obj/item/O as obj, var/mob/user as mob)
+/obj/machinery/atmospherics/binary/oxyregenerator/attackby(obj/item/O as obj, mob/user as mob)
 	if(component_attackby(O, user))
 		return TRUE
 	if(isWrench(O))
@@ -104,9 +104,9 @@
 
 	src.set_dir(turn(src.dir, 90))
 
-/obj/machinery/atmospherics/binary/oxyregenerator/Process(var/delay)
+/obj/machinery/atmospherics/binary/oxyregenerator/Process(delay)
 	..()
-	if((stat & (NOPOWER|BROKEN)) || !use_power)
+	if((inoperable()) || !use_power)
 		return
 
 	var/power_draw = -1
@@ -162,7 +162,7 @@
 			phase = "filling"
 
 /obj/machinery/atmospherics/binary/oxyregenerator/on_update_icon()
-	if(stat & NOPOWER)
+	if(!is_powered())
 		icon_state = "off"
 	else
 		icon_state = "[use_power ? "on" : "off"]"
@@ -171,7 +171,7 @@
 	ui_interact(user)
 	return TRUE
 
-/obj/machinery/atmospherics/binary/oxyregenerator/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/atmospherics/binary/oxyregenerator/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	var/data[0]
 	data["on"] = use_power ? 1 : 0
 	data["powerSetting"] = power_setting

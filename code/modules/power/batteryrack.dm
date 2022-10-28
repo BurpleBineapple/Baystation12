@@ -17,7 +17,7 @@
 	should_be_mapped = 1
 	base_type = /obj/machinery/power/smes/batteryrack
 	maximum_component_parts = list(/obj/item/stock_parts = 15)
-	
+
 	machine_name = "battery rack PSU"
 	machine_desc = "A very simple power storage solution: several power cells on a rack. About as basic as you can get."
 
@@ -56,13 +56,18 @@
 
 	overlays += "charge[charge_level]"
 
-	for(var/obj/item/cell/C in internal_cells)
-		cellcount++
-		overlays += "cell[cellcount]"
-		if(C.fully_charged())
-			overlays += "cell[cellcount]f"
-		else if(!C.charge)
-			overlays += "cell[cellcount]e"
+	if(!panel_open)
+		icon_state = "rack-closed"
+	else
+		icon_state = "rack"
+		for(var/obj/item/cell/C as anything in internal_cells)
+			if (++cellcount > max_cells)
+				break
+			overlays += "cell[cellcount]"
+			if(C.fully_charged())
+				overlays += "cell[cellcount]f"
+			else if(!C.charge)
+				overlays += "cell[cellcount]e"
 
 // Recalculate maxcharge and similar variables.
 /obj/machinery/power/smes/batteryrack/proc/update_maxcharge()
@@ -75,7 +80,7 @@
 
 
 // Sets input/output depending on our "mode" var.
-/obj/machinery/power/smes/batteryrack/proc/update_io(var/newmode)
+/obj/machinery/power/smes/batteryrack/proc/update_io(newmode)
 	mode = newmode
 	switch(mode)
 		if(PSU_OFFLINE)
@@ -92,7 +97,7 @@
 			output_attempt = 1
 
 // Store charge in the power cells, instead of using the charge var. Amount is in joules.
-/obj/machinery/power/smes/batteryrack/add_charge(var/amount)
+/obj/machinery/power/smes/batteryrack/add_charge(amount)
 	amount *= CELLRATE // Convert to CELLRATE first.
 	if(equalise)
 		// Now try to get least charged cell and use the power from it.
@@ -110,7 +115,7 @@
 			return
 
 
-/obj/machinery/power/smes/batteryrack/remove_charge(var/amount)
+/obj/machinery/power/smes/batteryrack/remove_charge(amount)
 	amount *= CELLRATE // Convert to CELLRATE first.
 	if(equalise)
 		// Now try to get most charged cell and use the power from it.
@@ -143,7 +148,7 @@
 			CL = C
 	return CL
 
-/obj/machinery/power/smes/batteryrack/proc/insert_cell(var/obj/item/cell/C, var/mob/user)
+/obj/machinery/power/smes/batteryrack/proc/insert_cell(obj/item/cell/C, mob/user)
 	if(!istype(C))
 		return 0
 
@@ -191,7 +196,7 @@
 		celldiff = min(min(celldiff, most.charge), least.maxcharge - least.charge)
 		least.give(most.use(celldiff))
 
-/obj/machinery/power/smes/batteryrack/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/power/smes/batteryrack/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	var/data[0]
 
 	data["mode"] = mode
@@ -232,7 +237,7 @@
 		internal_cells -= C
 	return ..()
 
-/obj/machinery/power/smes/batteryrack/attackby(var/obj/item/W as obj, var/mob/user as mob)
+/obj/machinery/power/smes/batteryrack/attackby(obj/item/W as obj, mob/user as mob)
 	if(..())
 		return TRUE
 	if(istype(W, /obj/item/cell)) // ID Card, try to insert it.
@@ -241,7 +246,7 @@
 		else
 			to_chat(user, "\The [src] has no empty slot for \the [W]")
 
-/obj/machinery/power/smes/batteryrack/interface_interact(var/mob/user)
+/obj/machinery/power/smes/batteryrack/interface_interact(mob/user)
 	ui_interact(user)
 	return TRUE
 

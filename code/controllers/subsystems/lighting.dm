@@ -1,4 +1,4 @@
-/var/lighting_overlays_initialised = FALSE
+var/global/lighting_overlays_initialised = FALSE
 
 SUBSYSTEM_DEF(lighting)
 	name = "Lighting"
@@ -28,9 +28,9 @@ SUBSYSTEM_DEF(lighting)
 	var/list/overlay_queue = list() // lighting overlays queued for update.
 	var/oq_idex = 1
 
-	var/tmp/processed_lights = 0
-	var/tmp/processed_corners = 0
-	var/tmp/processed_overlays = 0
+	var/processed_lights = 0
+	var/processed_corners = 0
+	var/processed_overlays = 0
 
 /datum/controller/subsystem/lighting/UpdateStat(time)
 	if (PreventUpdateStat(time))
@@ -46,11 +46,11 @@ SUBSYSTEM_DEF(lighting)
 	"})
 
 
-/datum/controller/subsystem/lighting/Initialize()
+/datum/controller/subsystem/lighting/Initialize(start_uptime)
 	InitializeTurfs()
 	lighting_overlays_initialised = TRUE
 	fire(FALSE, TRUE)
-	..()
+
 
 // It's safe to pass a list of non-turfs to this list - it'll only check turfs.
 /datum/controller/subsystem/lighting/proc/InitializeTurfs(list/targets)

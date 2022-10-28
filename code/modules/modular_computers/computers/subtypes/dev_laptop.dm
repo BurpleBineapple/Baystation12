@@ -17,17 +17,17 @@
 	var/icon_state_closed = "laptop-closed"
 	interact_sounds = list("keyboard", "keystroke")
 	interact_sound_volume = 20
-	
+
 /obj/item/modular_computer/laptop/Initialize()
 	. = ..()
 	screen_on = anchored
 
-/obj/item/modular_computer/laptop/AltClick(var/mob/user)
+/obj/item/modular_computer/laptop/AltClick(mob/user)
 // Prevents carrying of open laptops inhand.
 // While they work inhand, i feel it'd make tablets lose some of their high-mobility advantage they have over laptops now.
 	if(!CanPhysicallyInteract(user))
 		return
-	if(!istype(loc, /turf/))
+	if(!isturf(loc))
 		to_chat(usr, "\The [src] has to be on a stable surface first!")
 		return
 	anchored = !anchored

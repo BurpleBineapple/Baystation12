@@ -17,28 +17,28 @@ SUBSYSTEM_DEF(garbage)
 	runlevels = RUNLEVELS_DEFAULT | RUNLEVEL_LOBBY
 	init_order = SS_INIT_GARBAGE
 
-	var/static/tmp/list/collection_timeout = list(0, 30 SECONDS, 10 SECONDS)	// deciseconds to wait before moving something up in the queue to the next level
+	var/static/list/collection_timeout = list(0, 30 SECONDS, 10 SECONDS)	// deciseconds to wait before moving something up in the queue to the next level
 
 	//Stat tracking
-	var/static/tmp/delslasttick = 0            // number of del()'s we've done this tick
-	var/static/tmp/gcedlasttick = 0            // number of things that gc'ed last tick
-	var/static/tmp/totaldels = 0
-	var/static/tmp/totalgcs = 0
+	var/static/delslasttick = 0            // number of del()'s we've done this tick
+	var/static/gcedlasttick = 0            // number of things that gc'ed last tick
+	var/static/totaldels = 0
+	var/static/totalgcs = 0
 
-	var/static/tmp/highest_del_time = 0
-	var/static/tmp/highest_del_tickusage = 0
+	var/static/highest_del_time = 0
+	var/static/highest_del_tickusage = 0
 
-	var/static/tmp/list/pass_counts
-	var/static/tmp/list/fail_counts
+	var/static/list/pass_counts
+	var/static/list/fail_counts
 
-	var/static/tmp/list/items = list()         // Holds our qdel_item statistics datums
-	var/static/tmp/harddel_halt = FALSE        // If true, will avoid harddeleting from the final queue; will still respect HARDDEL_NOW.
+	var/static/list/items = list()         // Holds our qdel_item statistics datums
+	var/static/harddel_halt = FALSE        // If true, will avoid harddeleting from the final queue; will still respect HARDDEL_NOW.
 
 	//Queue
-	var/static/tmp/list/queues
+	var/static/list/queues
 
 	#ifdef TESTING
-	var/static/tmp/list/reference_find_on_fail = list()
+	var/static/list/reference_find_on_fail = list()
 	#endif
 
 
@@ -240,7 +240,7 @@ SUBSYSTEM_DEF(garbage)
 //this is mainly to separate things profile wise.
 /datum/controller/subsystem/garbage/proc/HardDelete(datum/D)
 	var/time = world.timeofday
-	var/tick = TICK_USAGE
+	var/tick = world.tick_usage
 	var/ticktime = world.time
 	++delslasttick
 	++totaldels
@@ -249,19 +249,19 @@ SUBSYSTEM_DEF(garbage)
 
 	del(D)
 
-	tick = (TICK_USAGE-tick+((world.time-ticktime)/world.tick_lag*100))
+	tick = world.tick_usage - tick + ((world.time - ticktime) / world.tick_lag * 100)
 
 	var/datum/qdel_item/I = items[type]
 
 	I.hard_deletes++
-	I.hard_delete_time += TICK_DELTA_TO_MS(tick)
+	I.hard_delete_time += tick * world.tick_lag
 
 
 	if (tick > highest_del_tickusage)
 		highest_del_tickusage = tick
 	time = world.timeofday - time
-	if (!time && TICK_DELTA_TO_MS(tick) > 1)
-		time = TICK_DELTA_TO_MS(tick)/100
+	if (!time && tick * world.tick_lag > 1)
+		time = tick * world.tick_lag * 0.01
 	if (time > highest_del_time)
 		highest_del_time = time
 	if (time > 10)
@@ -323,7 +323,7 @@ SUBSYSTEM_DEF(garbage)
 		if(world.time != start_time)
 			I.slept_destroy++
 		else
-			I.destroy_time += TICK_USAGE_TO_MS(start_tick)
+			I.destroy_time += (world.tick_usage - start_tick) * world.tick_lag
 		if(!D)
 			return
 		switch(hint)

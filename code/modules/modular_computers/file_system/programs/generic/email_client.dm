@@ -57,7 +57,7 @@
 	else
 		ui_header = "ntnrc_idle.gif"
 
-/datum/nano_module/email_client/
+/datum/nano_module/email_client
 	name = "Email Client"
 	var/stored_login = ""
 	var/stored_password = ""
@@ -93,7 +93,7 @@
 	if(L)
 		var/list/msg = list()
 		msg += "*--*\n"
-		msg += "<span class='notice'>New mail received from [received_message.source]:</span>\n"
+		msg += "[SPAN_NOTICE("New mail received from [received_message.source]:")]\n"
 		msg += "<b>Subject:</b> [received_message.title]\n<b>Message:</b>\n[digitalPencode2html(received_message.stored_data)]\n"
 		if(received_message.attachment)
 			msg += "<b>Attachment:</b> [received_message.attachment.filename].[received_message.attachment.filetype] ([received_message.attachment.size]GQ)\n"

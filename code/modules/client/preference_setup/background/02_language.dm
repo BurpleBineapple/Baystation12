@@ -29,7 +29,7 @@
 		. += "Your current species, faction or home system selection does not allow you to choose additional languages.<br>"
 	. = jointext(.,null)
 
-/datum/category_item/player_setup_item/background/languages/OnTopic(var/href,var/list/href_list, var/mob/user)
+/datum/category_item/player_setup_item/background/languages/OnTopic(href,list/href_list, mob/user)
 
 	if(href_list["remove_language"])
 		var/index = text2num(href_list["remove_language"])
@@ -53,7 +53,7 @@
 				return TOPIC_REFRESH
 	. = ..()
 
-/datum/category_item/player_setup_item/background/languages/proc/rebuild_language_cache(var/mob/user)
+/datum/category_item/player_setup_item/background/languages/proc/rebuild_language_cache(mob/user)
 
 	allowed_languages = list()
 	free_languages = list()
@@ -62,7 +62,7 @@
 		return
 
 	for(var/thing in pref.cultural_info)
-		var/decl/cultural_info/culture = SSculture.get_culture(pref.cultural_info[thing])
+		var/singleton/cultural_info/culture = SSculture.get_culture(pref.cultural_info[thing])
 		if(istype(culture))
 			var/list/langs = culture.get_spoken_languages()
 			if(LAZYLEN(langs))
@@ -78,7 +78,7 @@
 		if(user.has_admin_rights() || (!(lang.flags & RESTRICTED) && (lang.flags & WHITELISTED) && is_alien_whitelisted(user, lang)))
 			allowed_languages[thing] = TRUE
 
-/datum/category_item/player_setup_item/background/languages/proc/is_allowed_language(var/mob/user, var/datum/language/lang)
+/datum/category_item/player_setup_item/background/languages/proc/is_allowed_language(mob/user, datum/language/lang)
 	if(isnull(allowed_languages) || isnull(free_languages))
 		rebuild_language_cache(user)
 	if(!user || ((lang.flags & RESTRICTED) && is_alien_whitelisted(user, lang)))

@@ -1,5 +1,5 @@
 /obj/machinery/computer/ship/sensors/skrell
-	construct_state = /decl/machine_construction/default/panel_closed/computer/no_deconstruct
+	construct_state = /singleton/machine_construction/default/panel_closed/computer/no_deconstruct
 	base_type = /obj/machinery/computer/ship/sensors
 	print_language = LANGUAGE_SKRELLIAN
 
@@ -37,10 +37,7 @@
 		field_image.alpha = 50
 		field_image.layer = SINGULARITY_LAYER
 		field_image.appearance_flags |= RESET_COLOR
-
-		var/matrix/M = matrix()
-		M.Scale(3)
-		field_image.transform = M
+		field_image.SetTransform(scale = 3)
 
 	if(on)
 		overlays |= field_image

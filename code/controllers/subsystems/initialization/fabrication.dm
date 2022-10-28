@@ -3,16 +3,16 @@ SUBSYSTEM_DEF(fabrication)
 	flags = SS_NO_FIRE
 	init_order = SS_INIT_MISC_LATE
 
-	var/static/tmp/list/recipes = list()
-	var/static/tmp/list/categories = list()
-	var/static/tmp/list/stages_by_type = list()
+	var/static/list/recipes = list()
+	var/static/list/categories = list()
+	var/static/list/stages_by_type = list()
 
 
 /datum/controller/subsystem/fabrication/UpdateStat(time)
 	return
 
 
-/datum/controller/subsystem/fabrication/Initialize()
+/datum/controller/subsystem/fabrication/Initialize(start_uptime)
 	for (var/datum/fabricator_recipe/recipe as anything in subtypesof(/datum/fabricator_recipe))
 		recipe = new recipe
 		if (!recipe.name)
@@ -24,9 +24,9 @@ SUBSYSTEM_DEF(fabrication)
 			if (!categories[type])
 				categories[type] = list()
 			categories[type] |= recipe.category
-	var/list/stages = decls_repository.get_decls_of_subtype(/decl/crafting_stage)
+	var/list/stages = GET_SINGLETON_SUBTYPE_MAP(/singleton/crafting_stage)
 	for (var/id in stages)
-		var/decl/crafting_stage/stage = stages[id]
+		var/singleton/crafting_stage/stage = stages[id]
 		var/type = stage.begins_with_object_type
 		if (!ispath(type))
 			continue
@@ -58,7 +58,7 @@ SUBSYSTEM_DEF(fabrication)
 	if (!turf)
 		return
 	var/list/stages = SSfabrication.find_crafting_recipes(target.type)
-	for (var/decl/crafting_stage/stage in stages)
+	for (var/singleton/crafting_stage/stage in stages)
 		if (stage.can_begin_with(target) && stage.is_appropriate_tool(tool))
 			var/obj/item/crafting_holder/crafting = new (turf, stage, target, tool, user)
 			if (stage.progress_to(tool, user, crafting))

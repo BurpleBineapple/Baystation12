@@ -78,11 +78,11 @@ SUBSYSTEM_DEF(air)
 	var/list/active_hotspots = list()
 	var/list/active_edges = list()
 
-	var/tmp/list/deferred = list()
-	var/tmp/list/processing_edges
-	var/tmp/list/processing_fires
-	var/tmp/list/processing_hotspots
-	var/tmp/list/processing_zones
+	var/list/deferred = list()
+	var/list/processing_edges
+	var/list/processing_fires
+	var/list/processing_hotspots
+	var/list/processing_zones
 
 	var/active_zones = 0
 	var/next_id = 1
@@ -111,7 +111,7 @@ SUBSYSTEM_DEF(air)
 	active_edges.Cut()
 
 	// Re-run setup without air settling.
-	Initialize(REALTIMEOFDAY, simulate = FALSE)
+	Initialize(Uptime(), FALSE)
 
 	// Update next_fire so the MC doesn't try to make up for missed ticks.
 	next_fire = world.time + wait
@@ -130,36 +130,26 @@ SUBSYSTEM_DEF(air)
 	"})
 
 
-/datum/controller/subsystem/air/Initialize(timeofday, simulate = TRUE)
-
-	var/starttime = REALTIMEOFDAY
+/datum/controller/subsystem/air/Initialize(start_uptime, simulate = TRUE)
 	report_progress("Processing Geometry...")
-
 	var/simulated_turf_count = 0
 	for(var/turf/simulated/S)
 		simulated_turf_count++
 		S.update_air_properties()
-
 		CHECK_TICK
-
 	report_progress({"Total Simulated Turfs: [simulated_turf_count]
 Total Zones: [zones.len]
 Total Edges: [edges.len]
-Total Active Edges: [active_edges.len ? "<span class='danger'>[active_edges.len]</span>" : "None"]
+Total Active Edges: [active_edges.len ? SPAN_DANGER("[active_edges.len]") : "None"]
 Total Unsimulated Turfs: [world.maxx*world.maxy*world.maxz - simulated_turf_count]
+Geometry processing completed in [(Uptime() - start_uptime)/10] seconds!
 "})
-
-	report_progress("Geometry processing completed in [(REALTIMEOFDAY - starttime)/10] seconds!")
-
 	if (simulate)
 		report_progress("Settling air...")
-
-		starttime = REALTIMEOFDAY
+		start_uptime = Uptime()
 		fire(FALSE, TRUE)
+		report_progress("Air settling completed in [(Uptime() - start_uptime)/10] seconds!")
 
-		report_progress("Air settling completed in [(REALTIMEOFDAY - starttime)/10] seconds!")
-
-	..(timeofday)
 
 /datum/controller/subsystem/air/fire(resumed = FALSE, no_mc_tick = FALSE)
 	if (!resumed)
@@ -257,7 +247,7 @@ Total Unsimulated Turfs: [world.maxx*world.maxy*world.maxz - simulated_turf_coun
 			return
 
 	while (curr_hotspot.len)
-		var/obj/fire/F = curr_hotspot[curr_hotspot.len]
+		var/obj/hotspot/F = curr_hotspot[curr_hotspot.len]
 		curr_hotspot.len--
 
 		F.Process()

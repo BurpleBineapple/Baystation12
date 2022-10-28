@@ -1,4 +1,4 @@
-var/list/pai_emotions = list(
+var/global/list/pai_emotions = list(
 		"Happy" = 1,
 		"Cat" = 2,
 		"Extremely Happy" = 3,
@@ -25,7 +25,7 @@ var/global/list/default_pai_software = list()
 		var/datum/pai_software/P = new type()
 		if(pai_software_by_key[P.id])
 			var/datum/pai_software/O = pai_software_by_key[P.id]
-			log_error("<span class='warning'>pAI software module [P.name] has the same key as [O.name]!</span>")
+			log_error(SPAN_WARNING("pAI software module [P.name] has the same key as [O.name]!"))
 			r = 0
 			continue
 		pai_software_by_key[P.id] = P

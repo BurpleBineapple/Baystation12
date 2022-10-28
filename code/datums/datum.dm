@@ -8,9 +8,6 @@
 	var/tmp/last_find_references = 0
 #endif
 
-// The following vars cannot be edited by anyone
-/datum/VV_static()
-	return UNLINT(..()) + list("gc_destroyed", "is_processing")
 
 // Default implementation of clean-up code.
 // This should be overridden to remove all references pointing to the object being destroyed.
@@ -25,9 +22,8 @@
 
 	var/list/timers = active_timers
 	active_timers = null
-	for(var/thing in timers)
-		var/datum/timedevent/timer = thing
-		if (timer.spent)
+	for(var/datum/timedevent/timer as anything in timers)
+		if (timer.spent && !(timer.flags & TIMER_DELETE_ME))
 			continue
 		qdel(timer)
 
@@ -44,6 +40,12 @@
 
 	if (!isturf(src))	// Not great, but the 'correct' way to do it would add overhead for little benefit.
 		cleanup_events(src)
+
+	var/list/machines = global.state_machines["\ref[src]"]
+	if(length(machines))
+		for(var/base_type in machines)
+			qdel(machines[base_type])
+		global.state_machines -= "\ref[src]"
 
 	return QDEL_HINT_QUEUE
 

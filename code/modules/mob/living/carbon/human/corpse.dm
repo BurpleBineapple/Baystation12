@@ -23,7 +23,7 @@
 /obj/effect/landmark/corpse
 	name = "Unknown"
 	var/species = list(SPECIES_HUMAN)                 // List of species to pick from.
-	var/corpse_outfits = list(/decl/hierarchy/outfit) // List of outfits to pick from. Uses pickweight()
+	var/corpse_outfits = list(/singleton/hierarchy/outfit) // List of outfits to pick from. Uses pickweight()
 	var/spawn_flags = (~0)
 
 	var/skin_colors_per_species   = list() // Custom skin colors, per species -type-, if any. For example if you want dead Skrell to always have blue headtails, or similar
@@ -55,7 +55,7 @@
 
 
 #define HEX_COLOR_TO_RGB_ARGS(X) arglist(GetHexColors(X))
-/obj/effect/landmark/corpse/proc/randomize_appearance(var/mob/living/carbon/human/M, species_choice)
+/obj/effect/landmark/corpse/proc/randomize_appearance(mob/living/carbon/human/M, species_choice)
 	if((spawn_flags & CORPSE_SPAWNER_RANDOM_GENDER))
 		if(species_choice in genders_per_species)
 			M.change_gender(pick(genders_per_species[species_choice]))
@@ -72,14 +72,15 @@
 		if(species_choice in skin_colors_per_species)
 			M.change_skin_color(HEX_COLOR_TO_RGB_ARGS(pick(skin_colors_per_species[species_choice])))
 		else
-			M.s_tone = random_skin_tone(M.species)
+			M.skin_tone = random_skin_tone(M.species)
 
 	if((spawn_flags & CORPSE_SPAWNER_RANDOM_HAIR_COLOR))
 		if(species_choice in hair_colors_per_species)
 			M.change_hair_color(HEX_COLOR_TO_RGB_ARGS(pick(hair_colors_per_species[species_choice])))
 		else
 			M.randomize_hair_color()
-		M.change_facial_hair_color(M.r_hair, M.g_hair, M.b_hair)
+		var/list/rgb = rgb2num(M.head_hair_color)
+		M.change_facial_hair_color(rgb[1], rgb[2], rgb[3])
 
 	if((spawn_flags & CORPSE_SPAWNER_RANDOM_HAIR_STYLE))
 		if(species_choice in hair_styles_per_species)
@@ -99,7 +100,7 @@
 		else
 			M.randomize_eye_color()
 
-	var/decl/cultural_info/culture = M.get_cultural_value(TAG_CULTURE)
+	var/singleton/cultural_info/culture = M.get_cultural_value(TAG_CULTURE)
 	if(culture && CORPSE_SPAWNER_RANDOM_NAME & spawn_flags)
 		M.SetName(culture.get_random_name(M.gender))
 	else
@@ -108,76 +109,76 @@
 
 #undef HEX_COLOR_TO_RGB_ARGS
 
-/obj/effect/landmark/corpse/proc/equip_outfit(var/mob/living/carbon/human/M)
+/obj/effect/landmark/corpse/proc/equip_outfit(mob/living/carbon/human/M)
 	var/adjustments = 0
 	adjustments = (spawn_flags & CORPSE_SPAWNER_CUT_SURVIVAL)  ? (adjustments|OUTFIT_ADJUSTMENT_SKIP_SURVIVAL_GEAR) : adjustments
 	adjustments = (spawn_flags & CORPSE_SPAWNER_CUT_ID_PDA)    ? (adjustments|OUTFIT_ADJUSTMENT_SKIP_ID_PDA)        : adjustments
 	adjustments = (spawn_flags & CORPSE_SPAWNER_PLAIN_HEADSET) ? (adjustments|OUTFIT_ADJUSTMENT_PLAIN_HEADSET)      : adjustments
 
-	var/decl/hierarchy/outfit/corpse_outfit = outfit_by_type(pickweight(corpse_outfits))
+	var/singleton/hierarchy/outfit/corpse_outfit = outfit_by_type(pickweight(corpse_outfits))
 	corpse_outfit.equip(M, equip_adjustments = adjustments)
 
 /obj/effect/landmark/corpse/chef
 	name = "Chef"
-	corpse_outfits = list(/decl/hierarchy/outfit/job/service/chef)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/service/chef)
 
 /obj/effect/landmark/corpse/doctor
 	name = "Doctor"
-	corpse_outfits = list(/decl/hierarchy/outfit/job/medical/doctor)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/medical/doctor)
 
 /obj/effect/landmark/corpse/engineer
 	name = "Engineer"
-	corpse_outfits = list(/decl/hierarchy/outfit/job/engineering/engineer)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/engineering/engineer)
 
 /obj/effect/landmark/corpse/scientist
 	name = "Scientist"
-	corpse_outfits = list(/decl/hierarchy/outfit/job/science/scientist)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/science/scientist)
 
 /obj/effect/landmark/corpse/engineer/rig
-	corpse_outfits = list(/decl/hierarchy/outfit/job/engineering/engineer/void)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/engineering/engineer/void)
 
 /obj/effect/landmark/corpse/clown
 	name = "Clown"
-	corpse_outfits = list(/decl/hierarchy/outfit/clown)
+	corpse_outfits = list(/singleton/hierarchy/outfit/clown)
 
 /obj/effect/landmark/corpse/miner
 	name = "Miner"
-	corpse_outfits = list(/decl/hierarchy/outfit/job/cargo/mining)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/cargo/mining)
 
 /obj/effect/landmark/corpse/miner/rig
-	corpse_outfits = list(/decl/hierarchy/outfit/job/cargo/mining/void)
+	corpse_outfits = list(/singleton/hierarchy/outfit/job/cargo/mining/void)
 
 
 /obj/effect/landmark/corpse/bridgeofficer
 	name = "Bridge Officer"
-	corpse_outfits = list(/decl/hierarchy/outfit/nanotrasen/officer)
+	corpse_outfits = list(/singleton/hierarchy/outfit/nanotrasen/officer)
 
 /obj/effect/landmark/corpse/commander
 	name = "Commander"
-	corpse_outfits = list(/decl/hierarchy/outfit/nanotrasen/commander)
+	corpse_outfits = list(/singleton/hierarchy/outfit/nanotrasen/commander)
 
 /obj/effect/landmark/corpse/pirate
 	name = "Pirate"
-	corpse_outfits = list(/decl/hierarchy/outfit/pirate/norm)
+	corpse_outfits = list(/singleton/hierarchy/outfit/pirate/norm)
 	spawn_flags = CORPSE_SPAWNER_NO_RANDOMIZATION
 
 /obj/effect/landmark/corpse/pirate/ranged
 	name = "Pirate Gunner"
-	corpse_outfits = list(/decl/hierarchy/outfit/pirate/space)
+	corpse_outfits = list(/singleton/hierarchy/outfit/pirate/space)
 
 /obj/effect/landmark/corpse/russian
 	name = "Russian"
-	corpse_outfits = list(/decl/hierarchy/outfit/soviet_soldier)
+	corpse_outfits = list(/singleton/hierarchy/outfit/soviet_soldier)
 	spawn_flags = CORPSE_SPAWNER_NO_RANDOMIZATION
 
 /obj/effect/landmark/corpse/russian/ranged
-	corpse_outfits = list(/decl/hierarchy/outfit/soviet_soldier)
+	corpse_outfits = list(/singleton/hierarchy/outfit/soviet_soldier)
 
 /obj/effect/landmark/corpse/syndicate
 	name = "Syndicate Operative"
-	corpse_outfits = list(/decl/hierarchy/outfit/mercenary/syndicate)
+	corpse_outfits = list(/singleton/hierarchy/outfit/mercenary/syndicate)
 	spawn_flags = CORPSE_SPAWNER_NO_RANDOMIZATION
 
 /obj/effect/landmark/corpse/syndicate/commando
 	name = "Syndicate Commando"
-	corpse_outfits = list(/decl/hierarchy/outfit/mercenary/syndicate/commando)
+	corpse_outfits = list(/singleton/hierarchy/outfit/mercenary/syndicate/commando)

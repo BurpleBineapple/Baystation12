@@ -1,6 +1,6 @@
-var/const/TELEBEACON_WIRE_POWER     = 1
-var/const/TELEBEACON_WIRE_RELAY     = 2
-var/const/TELEBEACON_WIRE_SIGNALLER = 4
+var/global/const/TELEBEACON_WIRE_POWER     = 1
+var/global/const/TELEBEACON_WIRE_RELAY     = 2
+var/global/const/TELEBEACON_WIRE_SIGNALLER = 4
 
 
 // Targetable beacon used by teleporters
@@ -18,7 +18,7 @@ var/const/TELEBEACON_WIRE_SIGNALLER = 4
 	machine_desc = "Teleporter beacons allow teleporter systems to target them, for accurate, instantaneous transport of objects and people."
 	base_type = /obj/machinery/tele_beacon
 	wires = /datum/wires/tele_beacon
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 
 	/// Name of the beacon in the teleporter UI.
 	var/beacon_name
@@ -60,7 +60,7 @@ var/const/TELEBEACON_WIRE_SIGNALLER = 4
 				SPAN_NOTICE("You start to [anchored ? "disconnect" : "connect"] \the [src] [anchored ? "to" : "from"] \the [T].")
 			)
 
-			if (!do_after(user, 3 SECONDS, src, DO_DEFAULT | DO_BOTH_UNIQUE_ACT | DO_PUBLIC_PROGRESS))
+			if (!do_after(user, 3 SECONDS, src, DO_REPAIR_CONSTRUCT))
 				return TRUE
 
 			anchored = !anchored
@@ -106,14 +106,14 @@ var/const/TELEBEACON_WIRE_SIGNALLER = 4
 	..()
 
 	if (use_power && !stat)
-		stat |= EMPED
+		set_stat(MACHINE_STAT_EMPED, TRUE)
 		disconnect_computers()
 		var/emp_time = rand(15 SECONDS, 30 SECONDS) / severity
 		addtimer(CALLBACK(src, .proc/emp_act_end), emp_time, TIMER_UNIQUE | TIMER_OVERRIDE)
 
 
 /obj/machinery/tele_beacon/proc/emp_act_end()
-	stat &= ~EMPED
+	set_stat(MACHINE_STAT_EMPED, FALSE)
 	update_icon()
 
 
@@ -145,7 +145,7 @@ var/const/TELEBEACON_WIRE_SIGNALLER = 4
 		disconnect_computers()
 
 
-/obj/machinery/tele_beacon/is_powered(additional_flags)
+/obj/machinery/tele_beacon/is_powered()
 	. = ..()
 	if (!.)
 		return
@@ -239,7 +239,7 @@ var/const/TELEBEACON_WIRE_SIGNALLER = 4
 	if (!anchored)
 		return FALSE
 
-	if (inoperable(EMPED))
+	if (inoperable() || GET_FLAGS(stat, MACHINE_STAT_EMPED))
 		return FALSE
 
 	var/turf/T = get_turf(src)

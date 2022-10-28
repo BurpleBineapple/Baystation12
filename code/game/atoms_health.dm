@@ -4,6 +4,9 @@
 /// Maximum health for simple health processing. Use `get_max_health()` or `set_max_health()` to reference/modify.
 /atom/var/health_max
 
+/// Boolean. Whether or not the atom is dead. Toggled by death state changes in standardized health and provided as a simple way to check for death without additional proc call overhead from `is_alive()`.
+/atom/var/health_dead
+
 /**
  * LAZY List of damage type resistance or weakness multipliers, decimal form. Only applied to health reduction. Use `set_damage_resistance()`, `remove_damage_resistance()`, and `get_damage_resistance()` to reference/modify.
  *
@@ -92,7 +95,7 @@
 	SHOULD_CALL_PARENT(TRUE)
 	if (!health_max)
 		return
-	if (!is_alive())
+	if (health_dead)
 		return FALSE
 	if (!damage || damage < health_min_damage)
 		return FALSE
@@ -106,16 +109,6 @@
 	. = ..()
 
 /**
- * Checks if the atom is 'alive' or 'dead'.
- * Returns `null` if health is not in use.
- */
-/atom/proc/is_alive()
-	SHOULD_CALL_PARENT(TRUE)
-	if (!health_max)
-		return
-	return health_current > 0
-
-/**
  * Health modification for the health system. Applies `health_mod` directly to `simple_health` via addition and calls `handle_death_change` as needed.
  * Has no pre-modification checks, you should be using `damage_health()` or `restore_health()` instead of this.
  * `skip_death_state_change` will skip calling `handle_death_change()` when applicable. Used for when the originally calling proc needs handle it in a unique way.
@@ -126,14 +119,18 @@
 	if (!health_max)
 		return
 	health_mod = round(health_mod)
-	var/death_state = !is_alive()
+	var/death_state = health_dead
 	health_current = round(clamp(health_current + health_mod, 0, get_max_health()))
 	post_health_change(health_mod, damage_type)
-	var/new_death_state = !is_alive()
+	var/new_death_state = health_current > 0 ? FALSE : TRUE
 	if (death_state == new_death_state)
 		return FALSE
+	health_dead = new_death_state
 	if (!skip_death_state_change)
-		handle_death_change(new_death_state)
+		if (health_dead)
+			on_death()
+		else
+			on_revive()
 	return TRUE
 
 /**
@@ -151,11 +148,11 @@
 /**
  * Restore's the atom's health by the given value. Returns `TRUE` if the restoration resulted in a death state change.
  */
-/atom/proc/restore_health(damage, damage_type = null, skip_death_state_change = FALSE)
+/atom/proc/restore_health(damage, damage_type = null, skip_death_state_change = FALSE, skip_can_restore_check = FALSE)
 	SHOULD_CALL_PARENT(TRUE)
 	if (!health_max)
 		return
-	if (!can_restore_health(damage, damage_type))
+	if (!skip_can_restore_check && !can_restore_health(damage, damage_type))
 		return FALSE
 	return mod_health(damage, damage_type, skip_death_state_change)
 
@@ -165,12 +162,13 @@
  * - `damage_type` should be one of the `DAMAGE_*` damage types, or `null`. Defining a damage type is preferable over not.
  * - `damage_flags` is a bitfield of `DAMAGE_FLAG_*` values.
  * - `severity` should be a passthrough of `severity` from `ex_act()` and `emp_act()` for `DAMAGE_EXPLODE` and `DAMAGE_EMP` types respectively.
+ * - `skip_can_damage_check` (boolean) - If `TRUE` skips checking `can_damage_health()`. Intended for cases where this was already checked.
  */
-/atom/proc/damage_health(damage, damage_type, damage_flags = EMPTY_BITFIELD, severity)
+/atom/proc/damage_health(damage, damage_type, damage_flags = EMPTY_BITFIELD, severity, skip_can_damage_check = FALSE)
 	SHOULD_CALL_PARENT(TRUE)
 	if (!health_max)
 		return
-	if (!can_damage_health(damage, damage_type))
+	if (!skip_can_damage_check && !can_damage_health(damage, damage_type))
 		return FALSE
 
 	// Apply resistance/weakness modifiers
@@ -200,11 +198,12 @@
 	SHOULD_CALL_PARENT(TRUE)
 	return set_health(health_max)
 
-/**
- * Proc called when death state changes.
- * Provided for override use.
- */
-/atom/proc/handle_death_change(new_death_state)
+/// Proc called when the atom transitions from alive to dead.
+/atom/proc/on_death()
+	return
+
+/// Proc called when the atom transitions from dead to alive.
+/atom/proc/on_revive()
 	return
 
 /**
@@ -214,7 +213,10 @@
 /atom/proc/set_max_health(new_max_health, set_current_health = TRUE)
 	SHOULD_CALL_PARENT(TRUE)
 	health_max = round(new_max_health)
-	health_current = set_current_health ? get_max_health() : min(health_current, get_max_health())
+	if (set_current_health)
+		set_health(health_max)
+	else
+		set_health(min(health_current, health_max))
 
 /**
  * Sets the atom's resistance/weakness to the given damage type.
@@ -246,11 +248,19 @@
 	return isnull(resistance_value) ? 1 : resistance_value
 
 /**
+ * Determines whether or not the atom has full immunity to the given damage type.
+ */
+/atom/proc/is_damage_immune(damage_type)
+	if (get_damage_resistance(damage_type) == 0)
+		return TRUE
+	return FALSE
+
+/**
  * Handles sending damage state to users on `examine()`.
  * Overrideable to allow for different messages, or restricting when the messages can or cannot appear.
  */
 /atom/proc/examine_damage_state(mob/user)
-	if (!is_alive())
+	if (health_dead)
 		to_chat(user, SPAN_DANGER("It looks broken."))
 		return
 
@@ -266,7 +276,7 @@
 			to_chat(user, SPAN_DANGER("It looks severely damaged."))
 
 /mob/examine_damage_state(mob/user)
-	if (!is_alive())
+	if (health_dead)
 		to_chat(user, SPAN_DANGER("They look severely hurt and is not moving or responding to anything around them."))
 		return
 
@@ -291,6 +301,7 @@
 	target_atom.health_max = source_atom.health_max
 	target_atom.health_resistances = source_atom.health_resistances
 	target_atom.health_min_damage = source_atom.health_min_damage
+	target_atom.health_dead = source_atom.health_dead
 
 
 // Generalized *_act() handlers
@@ -304,9 +315,18 @@
 /atom/ex_act(severity, turf_breaker)
 	..()
 	// No hitsound here to avoid noise spam.
-	// Generalized - 250-350 damage at max, 125-175 at medium, 83-117 at minimum severities.
+	// Damage is based on severity and maximum health, with DEVASTATING being guaranteed death without any resistances.
 	var/damage_flags = turf_breaker ? DAMAGE_FLAG_TURF_BREAKER : EMPTY_BITFIELD
-	damage_health(rand(250, 350) / severity, DAMAGE_EXPLODE, damage_flags, severity)
+	var/damage = 0
+	switch (severity)
+		if (EX_ACT_DEVASTATING)
+			damage = round(health_max * (rand(100, 200) / 100)) // So that even atoms resistant to explosions may still be heavily damaged at this severity. Effective range of 100% to 200%.
+		if (EX_ACT_HEAVY)
+			damage = round(health_max * (rand(50, 100) / 100)) // Effective range of 50% to 100%.
+		if (EX_ACT_LIGHT)
+			damage = round(health_max * (rand(10, 50) / 100)) // Effective range of 10% to 50%.
+	if (damage)
+		damage_health(damage, DAMAGE_EXPLODE, damage_flags, severity)
 
 
 /atom/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume)
@@ -324,9 +344,19 @@
 			damage = P.get_structure_damage()
 		if (!can_damage_health(damage, P.damage_type))
 			return
-		playsound(damage_hitsound, src, 75)
-		damage_health(damage, P.damage_type)
+		playsound(src, damage_hitsound, 75)
+		damage_health(damage, P.damage_type, skip_can_damage_check = TRUE)
 		return 0
+
+
+/atom/lava_act(datum/gas_mixture/air, temperature, pressure)
+	if (is_damage_immune(DAMAGE_FIRE))
+		return FALSE
+	if (get_max_health())
+		fire_act(air, temperature)
+		if (!health_dead)
+			return FALSE
+	. = ..()
 
 
 /atom/attackby(obj/item/W, mob/user, click_params)
@@ -335,15 +365,15 @@
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
 		user.do_attack_animation(src)
 		if (!can_damage_health(W.force, W.damtype))
-			playsound(damage_hitsound, src, 50)
+			playsound(src, damage_hitsound, 50)
 			user.visible_message(
 				SPAN_WARNING("\The [user] hits \the [src] with \a [W], but it bounces off!"),
 				SPAN_WARNING("You hit \the [src] with \the [W], but it bounces off!")
 			)
 			return
-		playsound(damage_hitsound, src, 75)
+		playsound(src, damage_hitsound, 75)
 		user.visible_message(
 			SPAN_DANGER("\The [user] hits \the [src] with \a [W]!"),
 			SPAN_DANGER("You hit \the [src] with \the [W]!")
 		)
-		damage_health(W.force, W.damtype)
+		damage_health(W.force, W.damtype, skip_can_damage_check = TRUE)

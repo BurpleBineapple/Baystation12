@@ -1,4 +1,4 @@
-/decl/environment_data
+/singleton/environment_data
 	var/list/important_gasses = list(
 		GAS_OXYGEN =         TRUE,
 		GAS_NITROGEN =       TRUE,
@@ -42,11 +42,14 @@
 #define MIN_TEMPERATURE -40
 
 //all air alarms in area are connected via magic
-/area
-	var/list/air_vent_names = list()
-	var/list/air_scrub_names = list()
-	var/list/air_vent_info = list()
-	var/list/air_scrub_info = list()
+/// List (`string (id_tag)` => `string`). List of 'long names' for vents within the area. Also serves as a list of all vents registered with the area. Set by `./register_env_machine()`.
+/area/var/list/air_vent_names = list()
+/// List (`string (id_tag)` => `string`). List of 'long names' for scrubbers within the area. Also serves as a list of all scrubbers registered with the area. Set by `./register_env_machine()`.
+/area/var/list/air_scrub_names = list()
+/// List (`string (id_tag)` => `/datum/signal/data`). List of radio signal data received from vents in the area, indexed by the vent's `id_tag`. Do not modify directly; See `./receive_signal()` and `./send_signal()`.
+/area/var/list/air_vent_info = list()
+/// List (`string (id_tag)` => `/datum/signal/data`). List of radio signal data received from scrubbers in the area, indexed by the scrubber's `id_tag`. Do not modify directly; See `./receive_signal()` and `./send_signal()`.
+/area/var/list/air_scrub_info = list()
 
 /obj/machinery/alarm
 	name = "alarm"
@@ -98,20 +101,20 @@
 	var/co2_dangerlevel = 0
 	var/temperature_dangerlevel = 0
 	var/other_dangerlevel = 0
-	var/environment_type = /decl/environment_data
+	var/environment_type = /singleton/environment_data
 	var/report_danger_level = 1
 
 /obj/machinery/alarm/cold
 	target_temperature = T0C+4
 
-/decl/environment_data/finnish/Initialize()
+/singleton/environment_data/finnish/Initialize()
 	. = ..()
 	important_gasses[GAS_STEAM] = TRUE
 	dangerous_gasses -= GAS_STEAM
 
 /obj/machinery/alarm/warm
 	target_temperature = T0C+75
-	environment_type = /decl/environment_data/finnish
+	environment_type = /singleton/environment_data/finnish
 
 /obj/machinery/alarm/warm/Initialize()
 	. = ..()
@@ -135,7 +138,7 @@
 	unregister_radio(src, frequency)
 	return ..()
 
-/obj/machinery/alarm/New(var/loc, var/dir, atom/frame)
+/obj/machinery/alarm/New(loc, dir, atom/frame)
 	..(loc)
 
 	if(dir)
@@ -164,7 +167,7 @@
 	TLV["temperature"] =	list(T0C-26, T0C, T0C+40, T0C+66) // K
 
 
-	var/decl/environment_data/env_info = decls_repository.get_decl(environment_type)
+	var/singleton/environment_data/env_info = GET_SINGLETON(environment_type)
 	for(var/g in gas_data.gases)
 		if(!env_info.important_gasses[g])
 			trace_gas += g
@@ -178,7 +181,7 @@
 	return ..()
 
 /obj/machinery/alarm/Process()
-	if((stat & (NOPOWER|BROKEN)) || shorted || buildstage != 2)
+	if(inoperable() || shorted || buildstage != 2)
 		return
 
 	var/turf/simulated/location = loc
@@ -222,7 +225,7 @@
 
 	return
 
-/obj/machinery/alarm/proc/handle_heating_cooling(var/datum/gas_mixture/environment)
+/obj/machinery/alarm/proc/handle_heating_cooling(datum/gas_mixture/environment)
 	if (!regulating_temperature)
 		//check for when we should start adjusting temperature
 		if(!get_danger_level(target_temperature, TLV["temperature"]) && abs(environment.temperature - target_temperature) > 2.0)
@@ -267,7 +270,7 @@
 
 			environment.merge(gas)
 
-/obj/machinery/alarm/proc/overall_danger_level(var/datum/gas_mixture/environment)
+/obj/machinery/alarm/proc/overall_danger_level(datum/gas_mixture/environment)
 	var/partial_pressure = R_IDEAL_GAS_EQUATION*environment.temperature/environment.volume
 	var/environment_pressure = environment.return_pressure()
 
@@ -295,7 +298,7 @@
 
 	if(!istype(location))
 		return FALSE
-	
+
 	if(breach_cooldown)
 		return FALSE
 
@@ -321,7 +324,7 @@
 	addtimer(CALLBACK(src,/obj/machinery/alarm/proc/breach_end_cooldown), 10 MINUTES, TIMER_UNIQUE | TIMER_OVERRIDE)
 	return
 
-/obj/machinery/alarm/proc/get_danger_level(var/current_value, var/list/danger_levels)
+/obj/machinery/alarm/proc/get_danger_level(current_value, list/danger_levels)
 	if((current_value >= danger_levels[4] && danger_levels[4] > 0) || current_value <= danger_levels[1])
 		return 2
 	if((current_value > danger_levels[3] && danger_levels[3] > 0) || current_value < danger_levels[2])
@@ -333,7 +336,7 @@
 		icon_state = "alarmx"
 		set_light(0)
 		return
-	if((stat & (NOPOWER|BROKEN)) || shorted)
+	if(inoperable() || shorted)
 		icon_state = "alarmp"
 		set_light(0)
 		return
@@ -392,7 +395,7 @@
 	else if(dev_type == "AVP")
 		alarm_area.air_vent_info[id_tag] = signal.data
 
-/obj/machinery/alarm/proc/register_env_machine(var/m_id, var/device_type)
+/obj/machinery/alarm/proc/register_env_machine(m_id, device_type)
 	var/new_name
 	if (device_type=="AVP")
 		new_name = "[alarm_area.name] Vent Pump #[alarm_area.air_vent_names.len+1]"
@@ -407,7 +410,7 @@
 	frequency = new_frequency
 	radio_connection = radio_controller.add_object(src, frequency, RADIO_TO_AIRALARM)
 
-/obj/machinery/alarm/proc/send_signal(var/target, var/list/command)//sends signal 'command' to 'target'. Returns 0 if no radio connection, 1 otherwise
+/obj/machinery/alarm/proc/send_signal(target, list/command)//sends signal 'command' to 'target'. Returns 0 if no radio connection, 1 otherwise
 	if(!radio_connection)
 		return 0
 
@@ -464,7 +467,7 @@
 			for(var/device_id in alarm_area.air_vent_names)
 				send_signal(device_id, list("set_power"= 0) )
 
-/obj/machinery/alarm/proc/apply_danger_level(var/new_danger_level)
+/obj/machinery/alarm/proc/apply_danger_level(new_danger_level)
 	if (report_danger_level && alarm_area.atmosalert(new_danger_level, src))
 		post_alert(new_danger_level)
 
@@ -494,7 +497,7 @@
 	ui_interact(user)
 	return TRUE
 
-/obj/machinery/alarm/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1, var/master_ui = null, var/datum/topic_state/state = GLOB.default_state)
+/obj/machinery/alarm/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1, master_ui = null, datum/topic_state/state = GLOB.default_state)
 	var/data[0]
 	var/remote_connection = 0
 	var/remote_access = 0
@@ -521,7 +524,7 @@
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/alarm/proc/populate_status(var/data)
+/obj/machinery/alarm/proc/populate_status(data)
 	var/turf/location = get_turf(src)
 	var/datum/gas_mixture/environment = location.return_air()
 	var/total = environment.total_moles
@@ -531,7 +534,7 @@
 	if(total)
 		var/pressure = environment.return_pressure()
 		environment_data[++environment_data.len] = list("name" = "Pressure", "value" = pressure, "unit" = "kPa", "danger_level" = pressure_dangerlevel)
-		var/decl/environment_data/env_info = decls_repository.get_decl(environment_type)
+		var/singleton/environment_data/env_info = GET_SINGLETON(environment_type)
 		for(var/gas_id in env_info.important_gasses)
 			environment_data[++environment_data.len] = list(
 				"name" =  gas_data.name[gas_id],
@@ -551,7 +554,7 @@
 	data["fire_alarm"] = alarm_area.fire != null
 	data["target_temperature"] = "[target_temperature - T0C]C"
 
-/obj/machinery/alarm/proc/populate_controls(var/list/data)
+/obj/machinery/alarm/proc/populate_controls(list/data)
 	switch(screen)
 		if(AALARM_SCREEN_MAIN)
 			data["mode"] = mode
@@ -586,7 +589,7 @@
 						"panic"		= info["panic"],
 						"filters"	= list()
 					)
-				var/decl/environment_data/env_info = decls_repository.get_decl(environment_type)
+				var/singleton/environment_data/env_info = GET_SINGLETON(environment_type)
 				for(var/gas_id in env_info.filter_gasses)
 					scrubbers[scrubbers.len]["filters"] += list(
 						list(
@@ -610,7 +613,7 @@
 		if(AALARM_SCREEN_SENSORS)
 			var/list/selected
 			var/thresholds[0]
-			
+
 			var/breach_data = list("selected" = breach_pressure)
 			data["breach_data"] = breach_data
 
@@ -637,12 +640,12 @@
 
 			data["thresholds"] = thresholds
 
-/obj/machinery/alarm/CanUseTopic(var/mob/user, var/datum/topic_state/state, var/href_list = list())
+/obj/machinery/alarm/CanUseTopic(mob/user, datum/topic_state/state, href_list = list())
 	if(buildstage != 2)
 		return STATUS_CLOSE
 
 	if(aidisabled && isAI(user))
-		to_chat(user, "<span class='warning'>AI control for \the [src] interface has been disabled.</span>")
+		to_chat(user, SPAN_WARNING("AI control for \the [src] interface has been disabled."))
 		return STATUS_CLOSE
 
 	. = shorted ? STATUS_DISABLED : STATUS_INTERACTIVE
@@ -655,7 +658,7 @@
 
 	return min(..(), .)
 
-/obj/machinery/alarm/OnTopic(user, href_list, var/datum/topic_state/state)
+/obj/machinery/alarm/OnTopic(user, href_list, datum/topic_state/state)
 	// hrefs that can always be called -walter0o
 	if(href_list["rcon"])
 		var/attempted_rcon_setting = text2num(href_list["rcon"])
@@ -709,7 +712,7 @@
 					return TOPIC_REFRESH
 
 				if("set_scrub_gas")
-					var/decl/environment_data/env_info = decls_repository.get_decl(environment_type)
+					var/singleton/environment_data/env_info = GET_SINGLETON(environment_type)
 					if(env_info && (href_list["gas_id"] in env_info.filter_gasses))
 						send_signal(device_id, list(href_list["command"] = list(href_list["gas_id"] = text2num(href_list["val"]))) )
 					return TOPIC_REFRESH
@@ -816,7 +819,7 @@
 				return
 
 			if (wiresexposed && isWirecutter(W))
-				user.visible_message("<span class='warning'>[user] has cut the wires inside \the [src]!</span>", "You have cut the wires inside \the [src].")
+				user.visible_message(SPAN_WARNING("[user] has cut the wires inside \the [src]!"), "You have cut the wires inside \the [src].")
 				playsound(src.loc, 'sound/items/Wirecutter.ogg', 50, 1)
 				new/obj/item/stack/cable_coil(get_turf(src), 5)
 				buildstage = 1
@@ -824,33 +827,33 @@
 				return
 
 			if (istype(W, /obj/item/card/id) || istype(W, /obj/item/modular_computer))// trying to unlock the interface with an ID card
-				if(stat & (NOPOWER|BROKEN))
+				if(inoperable())
 					to_chat(user, "It does nothing")
 					return
 				else
 					if(allowed(usr) && !wires.IsIndexCut(AALARM_WIRE_IDSCAN))
 						locked = !locked
-						to_chat(user, "<span class='notice'>You [ locked ? "lock" : "unlock"] the Air Alarm interface.</span>")
+						to_chat(user, SPAN_NOTICE("You [ locked ? "lock" : "unlock"] the Air Alarm interface."))
 					else
-						to_chat(user, "<span class='warning'>Access denied.</span>")
+						to_chat(user, SPAN_WARNING("Access denied."))
 			return
 
 		if(1)
 			if(isCoil(W))
 				var/obj/item/stack/cable_coil/C = W
 				if (C.use(5))
-					to_chat(user, "<span class='notice'>You wire \the [src].</span>")
+					to_chat(user, SPAN_NOTICE("You wire \the [src]."))
 					buildstage = 2
 					update_icon()
 					return
 				else
-					to_chat(user, "<span class='warning'>You need 5 pieces of cable to do wire \the [src].</span>")
+					to_chat(user, SPAN_WARNING("You need 5 pieces of cable to do wire \the [src]."))
 					return
 
 			else if(isCrowbar(W))
 				to_chat(user, "You start prying out the circuit.")
 				playsound(src.loc, 'sound/items/Crowbar.ogg', 50, 1)
-				if(do_after(user,20) && buildstage == 1)
+				if(do_after(user, 2 SECONDS, src, DO_REPAIR_CONSTRUCT) && buildstage == 1)
 					to_chat(user, "You pry out the circuit!")
 					var/obj/item/airalarm_electronics/circuit = new /obj/item/airalarm_electronics()
 					circuit.dropInto(user.loc)
@@ -912,12 +915,12 @@ FIRE ALARM
 	var/wiresexposed = FALSE
 	var/buildstage = 2 // 2 = complete, 1 = no wires,  0 = circuit gone
 	var/seclevel
-	var/global/list/overlays_cache
+	var/static/list/overlays_cache
 
 /obj/machinery/firealarm/examine(mob/user)
 	. = ..()
 	if(loc.z in GLOB.using_map.contact_levels)
-		var/decl/security_state/security_state = decls_repository.get_decl(GLOB.using_map.security_state)
+		var/singleton/security_state/security_state = GET_SINGLETON(GLOB.using_map.security_state)
 		to_chat(user, "The current alert level is [security_state.current_security_level.name].")
 
 /obj/machinery/firealarm/Initialize()
@@ -952,10 +955,10 @@ FIRE ALARM
 		set_light(0)
 		return
 
-	if(stat & BROKEN)
+	if(MACHINE_IS_BROKEN(src))
 		overlays += get_cached_overlay("broken")
 		set_light(0)
-	else if(stat & NOPOWER)
+	else if(!is_powered())
 		overlays += get_cached_overlay("unpowered")
 		set_light(0)
 	else
@@ -963,8 +966,8 @@ FIRE ALARM
 			overlays += get_cached_overlay("fire1")
 			set_light(0.25, 0.1, 1, 2, COLOR_RED)
 		else if(z in GLOB.using_map.contact_levels)
-			var/decl/security_state/security_state = decls_repository.get_decl(GLOB.using_map.security_state)
-			var/decl/security_level/sl = security_state.current_security_level
+			var/singleton/security_state/security_state = GET_SINGLETON(GLOB.using_map.security_state)
+			var/singleton/security_level/sl = security_state.current_security_level
 
 			set_light(sl.light_max_bright, sl.light_inner_range, sl.light_outer_range, 2, sl.light_color_alarm)
 			overlays += image(sl.icon, sl.overlay_alarm)
@@ -997,11 +1000,11 @@ FIRE ALARM
 				if(isMultitool(W))
 					src.detecting = !( src.detecting )
 					if (src.detecting)
-						user.visible_message("<span class='notice'>\The [user] has reconnected [src]'s detecting unit!</span>", "<span class='notice'>You have reconnected [src]'s detecting unit.</span>")
+						user.visible_message(SPAN_NOTICE("\The [user] has reconnected [src]'s detecting unit!"), SPAN_NOTICE("You have reconnected [src]'s detecting unit."))
 					else
-						user.visible_message("<span class='notice'>\The [user] has disconnected [src]'s detecting unit!</span>", "<span class='notice'>You have disconnected [src]'s detecting unit.</span>")
+						user.visible_message(SPAN_NOTICE("\The [user] has disconnected [src]'s detecting unit!"), SPAN_NOTICE("You have disconnected [src]'s detecting unit."))
 				else if(isWirecutter(W))
-					user.visible_message("<span class='notice'>\The [user] has cut the wires inside \the [src]!</span>", "<span class='notice'>You have cut the wires inside \the [src].</span>")
+					user.visible_message(SPAN_NOTICE("\The [user] has cut the wires inside \the [src]!"), SPAN_NOTICE("You have cut the wires inside \the [src]."))
 					new/obj/item/stack/cable_coil(get_turf(src), 5)
 					playsound(src.loc, 'sound/items/Wirecutter.ogg', 50, 1)
 					buildstage = 1
@@ -1010,17 +1013,17 @@ FIRE ALARM
 				if(istype(W, /obj/item/stack/cable_coil))
 					var/obj/item/stack/cable_coil/C = W
 					if (C.use(5))
-						to_chat(user, "<span class='notice'>You wire \the [src].</span>")
+						to_chat(user, SPAN_NOTICE("You wire \the [src]."))
 						buildstage = 2
 						update_icon()
 						return
 					else
-						to_chat(user, "<span class='warning'>You need 5 pieces of cable to wire \the [src].</span>")
+						to_chat(user, SPAN_WARNING("You need 5 pieces of cable to wire \the [src]."))
 						return
 				else if(isCrowbar(W))
 					to_chat(user, "You start prying out the circuit.")
 					playsound(src.loc, 'sound/items/Crowbar.ogg', 50, 1)
-					if (do_after(user,20))
+					if (do_after(user, 2 SECONDS, src, DO_REPAIR_CONSTRUCT))
 						to_chat(user, "You pry out the circuit!")
 						var/obj/item/firealarm_electronics/circuit = new /obj/item/firealarm_electronics()
 						circuit.dropInto(user.loc)
@@ -1044,7 +1047,7 @@ FIRE ALARM
 	return
 
 /obj/machinery/firealarm/Process()//Note: this processing was mostly phased out due to other code, and only runs when needed
-	if(stat & (NOPOWER|BROKEN))
+	if(inoperable())
 		return
 
 	if(src.timing)
@@ -1058,7 +1061,7 @@ FIRE ALARM
 		src.updateDialog()
 	last_process = world.timeofday
 
-	if(locate(/obj/fire) in loc)
+	if(locate(/obj/hotspot) in loc)
 		alarm()
 
 /obj/machinery/firealarm/interface_interact(mob/user)
@@ -1071,7 +1074,7 @@ FIRE ALARM
 	var/d1
 	var/d2
 
-	var/decl/security_state/security_state = decls_repository.get_decl(GLOB.using_map.security_state)
+	var/singleton/security_state/security_state = GET_SINGLETON(GLOB.using_map.security_state)
 	if (istype(user, /mob/living/carbon/human) || istype(user, /mob/living/silicon))
 		A = A.loc
 
@@ -1140,7 +1143,7 @@ FIRE ALARM
 	update_icon()
 	return
 
-/obj/machinery/firealarm/proc/alarm(var/duration = 0)
+/obj/machinery/firealarm/proc/alarm(duration = 0)
 	if (!( src.working))
 		return
 	var/area/area = get_area(src)

@@ -79,7 +79,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 
 		return
 
-/obj/machinery/computer/ship/helm/relaymove(var/mob/user, direction)
+/obj/machinery/computer/ship/helm/relaymove(mob/user, direction)
 	if(viewing_overmap(user) && linked)
 		if(prob(user.skill_fail_chance(SKILL_PILOT, 50, linked.skill_needed, factor = 1)))
 			direction = turn(direction,pick(90,-90))
@@ -87,7 +87,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 		set_operator(user)
 		return 1
 
-/obj/machinery/computer/ship/helm/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/computer/ship/helm/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	var/data[0]
 
 	if(!linked)
@@ -117,9 +117,9 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 
 		var/speed = round(linked.get_speed()*1000, 0.01)
 		if(linked.get_speed() < SHIP_SPEED_SLOW)
-			speed = "<span class='good'>[speed]</span>"
+			speed = SPAN_GOOD("[speed]")
 		if(linked.get_speed() > SHIP_SPEED_FAST)
-			speed = "<span class='average'>[speed]</span>"
+			speed = SPAN_CLASS("average", "[speed]")
 		data["speed"] = speed
 
 		if(linked.get_speed())
@@ -146,7 +146,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 			ui.open()
 			ui.set_auto_update(1)
 
-/obj/machinery/computer/ship/helm/OnTopic(var/mob/user, var/list/href_list, state)
+/obj/machinery/computer/ship/helm/OnTopic(mob/user, list/href_list, state)
 	if(..())
 		return TOPIC_HANDLED
 
@@ -162,7 +162,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 			sec_name = "Sector #[known_sectors.len]"
 		R.fields["name"] = sec_name
 		if(sec_name in known_sectors)
-			to_chat(user, "<span class='warning'>Sector with that name already exists, please input a different name.</span>")
+			to_chat(user, SPAN_WARNING("Sector with that name already exists, please input a different name."))
 			return TOPIC_REFRESH
 		switch(href_list["add"])
 			if("current")
@@ -331,7 +331,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 	machine_name = "navigation console"
 	machine_desc = "Used to view a sensor-assisted readout of the current sector and its surrounding areas."
 
-/obj/machinery/computer/ship/navigation/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/computer/ship/navigation/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	if(!linked)
 		display_reconnect_dialog(user, "Navigation")
 		return
@@ -366,7 +366,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 		ui.open()
 		ui.set_auto_update(1)
 
-/obj/machinery/computer/ship/navigation/OnTopic(var/mob/user, var/list/href_list)
+/obj/machinery/computer/ship/navigation/OnTopic(mob/user, list/href_list)
 	if(..())
 		return TOPIC_HANDLED
 
@@ -384,7 +384,7 @@ LEGACY_RECORD_STRUCTURE(all_waypoints, waypoint)
 	machine_desc = "A compact, slimmed-down version of the navigation console."
 
 /obj/machinery/computer/ship/navigation/telescreen/on_update_icon()
-	if(reason_broken & MACHINE_BROKEN_NO_PARTS || stat & NOPOWER || stat & BROKEN)
+	if(reason_broken & MACHINE_BROKEN_NO_PARTS || !is_powered() || MACHINE_IS_BROKEN(src))
 		icon_state = "tele_off"
 		set_light(0)
 	else

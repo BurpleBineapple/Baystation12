@@ -1,7 +1,7 @@
 
 //Hijacking this file for BS12 playernotes functions. ~ Chinsky.
 
-/proc/notes_add(var/key, var/note, var/mob/user)
+/proc/notes_add(key, note, mob/user)
 	if (!key || !note)
 		return
 
@@ -43,7 +43,7 @@
 	infos += P
 	to_save(info, infos)
 
-	message_staff("<span class='notice'>[P.author] has edited [target]'s notes.</span>")
+	message_staff(SPAN_NOTICE("[P.author] has edited [target]'s notes."))
 	log_admin("[P.author] has edited [target]'s notes.")
 
 	del(info) // savefile, so NOT qdel
@@ -53,12 +53,12 @@
 	var/list/note_keys
 	from_save(note_list, note_keys)
 	if(!note_keys) note_keys = list()
-	if(!list_find(note_keys, target)) note_keys += target
+	if(!note_keys.Find(target)) note_keys += target
 	to_save(note_list, note_keys)
 	del(note_list) // savefile, so NOT qdel
 
 
-/proc/notes_del(var/key, var/index)
+/proc/notes_del(key, index)
 	var/target = ckey(key)
 	var/savefile/info = new("data/player_saves/[copytext_char(target, 1, 2)]/[target]/info.sav")
 	var/list/infos
@@ -69,12 +69,12 @@
 	infos.Remove(item)
 	to_save(info, infos)
 
-	message_staff("<span class='notice'>[key_name_admin(usr)] deleted one of [target]'s notes.</span>")
+	message_staff(SPAN_NOTICE("[key_name_admin(usr)] deleted one of [target]'s notes."))
 	log_admin("[key_name(usr)] deleted one of [target]'s notes.")
 
 	del(info) // savefile, so NOT qdel
 
-/proc/show_player_info_irc(var/key as text)
+/proc/show_player_info_irc(key as text)
 	var/dat = "          Info on [key]\n"
 	var/target = ckey(key)
 	var/savefile/info = new("data/player_saves/[copytext_char(target, 1, 2)]/[target]/info.sav")

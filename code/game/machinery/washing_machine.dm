@@ -13,7 +13,7 @@
 	icon_state = "wm_00"
 	density = TRUE
 	anchored = TRUE
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
 	var/state = 0
@@ -58,7 +58,7 @@
 		to_chat(usr, "You must first close the machine.")
 		return
 
-	if(stat & NOPOWER)
+	if(!is_powered())
 		to_chat(usr, SPAN_WARNING("\The [src] is unpowered."))
 		return
 
@@ -111,7 +111,7 @@
 	if(state & WASHER_STATE_CLOSED)
 		to_chat(usr, SPAN_WARNING("\The [src] is closed."))
 		return
-	if(!do_after(usr, 2 SECONDS, src))
+	if(!do_after(usr, 2 SECONDS, src, DO_DEFAULT | DO_USER_UNIQUE_ACT | DO_PUBLIC_PROGRESS))
 		return
 	if(!(state & WASHER_STATE_CLOSED))
 		usr.dropInto(loc)

@@ -8,12 +8,12 @@
 		new /datum/wire_description(VENDING_WIRE_IDSCAN, "This wire is connected to the ID scanning panel.", SKILL_EXPERT)
 	)
 
-var/const/VENDING_WIRE_THROW = 1
-var/const/VENDING_WIRE_CONTRABAND = 2
-var/const/VENDING_WIRE_ELECTRIFY = 4
-var/const/VENDING_WIRE_IDSCAN = 8
+var/global/const/VENDING_WIRE_THROW = 1
+var/global/const/VENDING_WIRE_CONTRABAND = 2
+var/global/const/VENDING_WIRE_ELECTRIFY = 4
+var/global/const/VENDING_WIRE_IDSCAN = 8
 
-/datum/wires/vending/CanUse(var/mob/living/L)
+/datum/wires/vending/CanUse(mob/living/L)
 	var/obj/machinery/vending/V = holder
 	if(!istype(L, /mob/living/silicon))
 		if(V.seconds_electrified)
@@ -31,7 +31,7 @@ var/const/VENDING_WIRE_IDSCAN = 8
 	. += "The green light is [(V.categories & CAT_HIDDEN) ? "on" : "off"].<BR>"
 	. += "The [V.scan_id ? "purple" : "yellow"] light is on.<BR>"
 
-/datum/wires/vending/UpdatePulsed(var/index)
+/datum/wires/vending/UpdatePulsed(index)
 	var/obj/machinery/vending/V = holder
 	switch(index)
 		if(VENDING_WIRE_THROW)
@@ -43,7 +43,7 @@ var/const/VENDING_WIRE_IDSCAN = 8
 		if(VENDING_WIRE_IDSCAN)
 			V.scan_id = !V.scan_id
 
-/datum/wires/vending/UpdateCut(var/index, var/mended)
+/datum/wires/vending/UpdateCut(index, mended)
 	var/obj/machinery/vending/V = holder
 	switch(index)
 		if(VENDING_WIRE_THROW)

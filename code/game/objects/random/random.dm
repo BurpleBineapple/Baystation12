@@ -171,7 +171,7 @@
 				/obj/item/stack/medical/advanced/bruise_pack = 2,
 				/obj/item/stack/medical/advanced/ointment = 2,
 				/obj/item/stack/medical/splint = 1,
-				/obj/item/reagent_containers/hypospray/autoinjector = 3,
+				/obj/item/reagent_containers/hypospray/autoinjector/inaprovaline = 3,
 				/obj/item/storage/pill_bottle/kelotane = 2,
 				/obj/item/storage/pill_bottle/antitox = 2,
 				/obj/item/storage/med_pouch/trauma = 2,
@@ -183,19 +183,22 @@
 /obj/random/firstaid
 	name = "Random First Aid Kit"
 	desc = "This is a random first aid kit."
-	icon = 'icons/obj/storage.dmi'
-	icon_state = "firstaid"
+	icon = 'icons/obj/medical.dmi'
+	icon_state = "fak-basic"
 
 /obj/random/firstaid/spawn_choices()
-	return list(/obj/item/storage/firstaid/regular = 4,
-				/obj/item/storage/firstaid/trauma = 3,
-				/obj/item/storage/firstaid/toxin = 3,
-				/obj/item/storage/firstaid/o2 = 3,
-				/obj/item/storage/firstaid/stab = 2,
-				/obj/item/storage/firstaid/adv = 2,
-				/obj/item/storage/firstaid/combat = 1,
-				/obj/item/storage/firstaid/empty = 2,
-				/obj/item/storage/firstaid/fire = 3)
+	return list(
+		/obj/item/storage/firstaid/regular = 4,
+		/obj/item/storage/firstaid/trauma = 3,
+		/obj/item/storage/firstaid/toxin = 3,
+		/obj/item/storage/firstaid/o2 = 3,
+		/obj/item/storage/firstaid/fire = 3,
+		/obj/item/storage/firstaid/radiation = 3,
+		/obj/item/storage/firstaid/stab = 2,
+		/obj/item/storage/firstaid/adv = 2,
+		/obj/item/storage/firstaid/combat = 1,
+		/obj/item/storage/firstaid/empty = 2
+	)
 
 /obj/random/contraband
 	name = "Random Illegal Item"
@@ -212,7 +215,7 @@
 				/obj/item/reagent_containers/glass/beaker/vial/random/toxin = 1,
 				/obj/item/reagent_containers/glass/beaker/sulphuric = 1,
 				/obj/item/contraband/poster = 5,
-				/obj/item/material/butterflyblade = 3,
+				/obj/item/material/small_blade = 3,
 				/obj/item/material/butterflyhandle = 3,
 				/obj/item/melee/baton/cattleprod = 1,
 				/obj/item/material/knife/combat = 1,
@@ -282,7 +285,6 @@
 				/obj/item/gun/projectile/automatic/merc_smg = 2,
 				/obj/item/gun/projectile/automatic/assault_rifle = 2,
 				/obj/item/gun/projectile/automatic/bullpup_rifle = 2,
-				/obj/item/gun/projectile/pistol/military/alt = 3,
 				/obj/item/gun/projectile/pistol/sec = 4,
 				/obj/item/gun/projectile/pistol/holdout = 4,
 				/obj/item/gun/projectile/pirate = 5,
@@ -306,7 +308,6 @@
 /obj/random/handgun/spawn_choices()
 	return list(/obj/item/gun/projectile/pistol/sec = 3,
 				/obj/item/gun/energy/gun = 2,
-				/obj/item/gun/projectile/pistol/military/alt = 1,
 				/obj/item/gun/projectile/pistol/holdout = 2,
 				/obj/item/gun/energy/retro = 1,
 				/obj/item/gun/projectile/pistol/throwback = 1,
@@ -431,7 +432,7 @@
 				/obj/item/remains/robot)
 
 
-obj/random/closet //A couple of random closets to spice up maint
+/obj/random/closet //A couple of random closets to spice up maint
 	name = "random closet"
 	desc = "This is a random closet."
 	icon = 'icons/obj/closets/bases/closet.dmi'
@@ -471,20 +472,6 @@ obj/random/closet //A couple of random closets to spice up maint
 		var/vermin_type = pickweight(locker_vermin)
 		new vermin_type(.)
 
-/obj/random/coin
-	name = "random coin"
-	desc = "This is a random coin."
-	icon = 'icons/obj/coin.dmi'
-	icon_state = "coin1"
-
-/obj/random/coin/spawn_choices()
-	return list(/obj/item/material/coin/gold = 3,
-				/obj/item/material/coin/silver = 4,
-				/obj/item/material/coin/diamond = 2,
-				/obj/item/material/coin/iron = 4,
-				/obj/item/material/coin/uranium = 3,
-				/obj/item/material/coin/platinum = 1,
-				/obj/item/material/coin/phoron = 1)
 
 /obj/random/toy
 	name = "random toy"
@@ -567,22 +554,40 @@ obj/random/closet //A couple of random closets to spice up maint
 /obj/random/soap
 	name = "Random Cleaning Supplies"
 	desc = "This is a random bar of soap. Soap! SOAP?! SOAP!!!"
-	icon = 'icons/obj/items.dmi'
-	icon_state = "soaprandom"
+	icon = 'icons/obj/soap.dmi'
+	icon_state = "soap"
 
 /obj/random/soap/spawn_choices()
-	return list(/obj/item/soap = 12,
-				/obj/item/reagent_containers/glass/rag = 2,
-				/obj/item/reagent_containers/spray/cleaner = 2,
-				/obj/item/grenade/chem_grenade/cleaner = 1)
+	return list(/obj/item/soap/random,
+				/obj/item/soap/space_soap,
+				/obj/item/soap/space_soap,
+				/obj/item/soap/water_soap,
+				/obj/item/soap/fire_soap,
+				/obj/item/soap/rainbow_soap,
+				/obj/item/soap/diamond_soap,
+				/obj/item/soap/uranium_soap,
+				/obj/item/soap/silver_soap,
+				/obj/item/soap/brown_soap,
+				/obj/item/soap/white_soap,
+				/obj/item/soap/grey_soap,
+				/obj/item/soap/pink_soap,
+				/obj/item/soap/purple_soap,
+				/obj/item/soap/blue_soap,
+				/obj/item/soap/cyan_soap,
+				/obj/item/soap/green_soap,
+				/obj/item/soap/yellow_soap,
+				/obj/item/soap/orange_soap,
+				/obj/item/soap/red_soap,
+				/obj/item/soap/golden_soap,
+)
 
-obj/random/obstruction //Large objects to block things off in maintenance
+/obj/random/obstruction //Large objects to block things off in maintenance
 	name = "random obstruction"
 	desc = "This is a random obstruction."
 	icon = 'icons/obj/cult.dmi'
 	icon_state = "cultgirder"
 
-obj/random/obstruction/spawn_choices()
+/obj/random/obstruction/spawn_choices()
 	return list(/obj/structure/barricade,
 				/obj/structure/girder,
 				/obj/structure/girder/displaced,
@@ -696,6 +701,7 @@ obj/random/obstruction/spawn_choices()
 				/obj/item/pizzabox/vegetable,
 				/obj/item/pizzabox/margherita,
 				/obj/item/pizzabox/mushroom,
+				/obj/item/pizzabox/fruit,
 				/obj/item/reagent_containers/food/snacks/plumphelmetbiscuit,
 				/obj/item/reagent_containers/food/snacks/skrellsnacks)
 
@@ -1116,7 +1122,7 @@ something, make sure it's not in one of the other lists.*/
 	icon_state = "crow"
 	spawn_nothing_percentage = 80
 
-obj/random/hostile/spawn_choices()
+/obj/random/hostile/spawn_choices()
 	return list(/mob/living/simple_animal/hostile/viscerator,
 				/mob/living/simple_animal/hostile/carp,
 				/mob/living/simple_animal/hostile/carp/pike)
@@ -1124,7 +1130,7 @@ obj/random/hostile/spawn_choices()
 /*
 	Selects one spawn point out of a group of points with the same ID and asks it to generate its items
 */
-var/list/multi_point_spawns
+var/global/list/multi_point_spawns
 
 /obj/random_multi
 	name = "random object spawn point"
@@ -1187,8 +1193,8 @@ var/list/multi_point_spawns
 	id = "Maint Skeleton"
 	item_path = /obj/structure/skele_stand/maint
 
-var/list/random_junk_
-var/list/random_useful_
+var/global/list/random_junk_
+var/global/list/random_useful_
 /proc/get_random_useful_type()
 	if(!random_useful_)
 		random_useful_ = list()

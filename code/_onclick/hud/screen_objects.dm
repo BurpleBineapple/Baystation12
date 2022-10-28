@@ -168,7 +168,7 @@
 	screen_loc = ui_acti
 	var/intent = I_HELP
 
-/obj/screen/intent/Click(var/location, var/control, var/params)
+/obj/screen/intent/Click(location, control, params)
 	var/list/P = params2list(params)
 	var/icon_x = text2num(P["icon-x"])
 	var/icon_y = text2num(P["icon-y"])
@@ -226,7 +226,7 @@
 								no_mask = 1
 
 						if(no_mask)
-							to_chat(C, "<span class='notice'>You are not wearing a suitable mask or helmet.</span>")
+							to_chat(C, SPAN_NOTICE("You are not wearing a suitable mask or helmet."))
 							return 1
 						else
 							var/list/nicename = null

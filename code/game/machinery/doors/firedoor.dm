@@ -119,10 +119,9 @@
 			continue
 		var/celsius = convert_k2c(tile_info[index][1])
 		var/pressure = tile_info[index][2]
-		o += "<span class='[(dir_alerts[index] & (FIREDOOR_ALERT_HOT|FIREDOOR_ALERT_COLD)) ? "warning" : "color:blue"]'>"
-		o += "[celsius]&deg;C</span> "
-		o += "<span style='color:blue'>"
-		o += "[pressure]kPa</span></li>"
+		o += "[SPAN_CLASS("[(dir_alerts[index] & (FIREDOOR_ALERT_HOT|FIREDOOR_ALERT_COLD)) ? "warning" : "color:blue"]", "[celsius]&deg;C")] "
+		o += "<span style='color:blue'>[pressure]kPa</span>"
+		o += "</li>"
 		to_chat(user, o)
 	if(islist(users_to_open) && users_to_open.len)
 		var/users_to_open_string = users_to_open[1]
@@ -144,9 +143,9 @@
 			return TRUE
 	return FALSE
 
-/obj/machinery/door/firedoor/attack_generic(var/mob/user, var/damage)
+/obj/machinery/door/firedoor/attack_generic(mob/user, damage)
 	playsound(loc, 'sound/weapons/tablehit1.ogg', 50, 1)
-	if(stat & BROKEN)
+	if(MACHINE_IS_BROKEN(src))
 		qdel(src)
 	..()
 
@@ -158,7 +157,7 @@
 	if(blocked)
 		to_chat(user, SPAN_WARNING("\The [src] is welded shut!"))
 		return
-	if(density && (stat & (BROKEN|NOPOWER))) //can still close without power
+	if(density && (inoperable())) //can still close without power
 		to_chat(user, "\The [src] is not functioning - you'll have to force it open manually.")
 		return
 
@@ -213,7 +212,7 @@
 				SPAN_ITALIC("You hear welding.")
 			)
 			playsound(loc, 'sound/items/Welder.ogg', 50, TRUE)
-			if(do_after(user, 2 SECONDS, src))
+			if(do_after(user, 2 SECONDS, src, DO_REPAIR_CONSTRUCT))
 				if(!W.isOn())
 					return
 				blocked = !blocked
@@ -247,7 +246,7 @@
 				SPAN_ITALIC("You hear metal bumping against metal.")
 			)
 			playsound(loc, 'sound/items/Crowbar.ogg', 100, TRUE)
-			if(do_after(user, 30, src))
+			if(do_after(user, 3 SECONDS, src, DO_REPAIR_CONSTRUCT))
 				if(blocked && density && hatch_open)
 					playsound(loc, 'sound/items/Deconstruct.ogg', 100, TRUE)
 					user.visible_message(
@@ -285,9 +284,9 @@
 			SPAN_WARNING("You hear metal groaning and grinding!")
 		)
 		playsound(loc, 'sound/machines/airlock_creaking.ogg', 100, TRUE)
-		if(do_after(user, 30, src))
+		if(do_after(user, 3 SECONDS, src, DO_REPAIR_CONSTRUCT))
 			if(isCrowbar(C))
-				if(stat & (BROKEN|NOPOWER) || !density)
+				if(inoperable() || !density)
 					user.visible_message(
 						SPAN_DANGER("\The [user] pries \the [src] [density ? "open" : "shut"]!"),
 						SPAN_DANGER("You force [density ? "open" : "shut"] \the [src]!"),
@@ -311,8 +310,8 @@
 			return
 	return ..()
 
-/obj/machinery/door/firedoor/deconstruct(mob/user, var/moved = FALSE)
-	if (stat & BROKEN)
+/obj/machinery/door/firedoor/deconstruct(mob/user, moved = FALSE)
+	if (MACHINE_IS_BROKEN(src))
 		new /obj/item/stock_parts/circuitboard/broken(loc)
 	else
 		new/obj/item/airalarm_electronics(loc)
@@ -430,21 +429,21 @@
 					SPAN_DANGER("\The [src] forcefully shoves you out of the way!"),
 					SPAN_WARNING("You hear metal smacking into something.")
 				)
-				M.apply_damage(10, BRUTE, used_weapon = src)
+				M.apply_damage(10, DAMAGE_BRUTE, used_weapon = src)
 				if(direction)
 					M.Move(get_step(src, direction))
 	playsound(loc, close_sound, 25, TRUE)
 	closing = FALSE
 	return ..()
 
-/obj/machinery/door/firedoor/open(var/forced = FALSE)
+/obj/machinery/door/firedoor/open(forced = FALSE)
 	if(hatch_open)
 		hatch_open = FALSE
 		visible_message(SPAN_NOTICE("\The [src]'s maintenance hatch falls shut as it moves."))
 		update_icon()
 
 	if(!forced)
-		if(stat & (BROKEN|NOPOWER))
+		if(inoperable())
 			return //needs power to open unless it was forced
 		else
 			use_power_oneoff(360)
@@ -477,7 +476,7 @@
 		if(A.atmosalm)
 			return
 		var/obj/machinery/alarm/alarm = locate() in A
-		if(!alarm || (alarm.stat & (NOPOWER|BROKEN)))
+		if(!alarm || (alarm.inoperable()))
 			return
 	return TRUE
 

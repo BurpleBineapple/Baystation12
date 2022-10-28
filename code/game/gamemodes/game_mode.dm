@@ -7,11 +7,9 @@ var/global/list/additional_antag_types = list()
 	var/extended_round_description = "This roundtype should not be spawned, let alone votable. Someone contact a developer and tell them the game's broken again."
 	var/config_tag = null
 	var/votable = TRUE
-	var/probability = 0
 
 	var/required_players = 0                 // Minimum players for round to start if voted in.
 	var/required_enemies = 0                 // Minimum antagonists for round to start.
-	var/newscaster_announcements = null
 	var/end_on_antag_death = FALSE           // Round will end when all antagonists are dead.
 	var/ert_disabled = FALSE                 // ERT cannot be called.
 	var/deny_respawn = FALSE	             // Disable respawn during this round.
@@ -154,14 +152,14 @@ var/global/list/additional_antag_types = list()
 /// Run prior to a mode vote to determine if the mode should be included. Falsy if yes, otherwise a status message.
 /datum/game_mode/proc/check_votable(list/lobby_players)
 	if (lobby_players.len < required_players)
-		return "Not enough players are in the lobby. [lobby_players.len] of the required [required_players]."
+		return "[lobby_players.len]/[required_players] lobby players"
 
 
 /// Check to see if the currently selected mode can be started. Falsy if yes, otherwise a status message.
 /datum/game_mode/proc/check_startable(list/lobby_players)
 	var/list/ready_players = SSticker.ready_players(lobby_players)
 	if (ready_players.len < required_players)
-		return "Not enough players. [ready_players.len] ready of the required [required_players]."
+		return "[ready_players.len]/[required_players] ready players"
 
 	var/enemy_count = 0
 	var/list/all_antag_types = GLOB.all_antag_types_
@@ -180,11 +178,11 @@ var/global/list/additional_antag_types = list()
 				potential = antag.get_potential_candidates(src)
 			if(islist(potential))
 				if(require_all_templates && potential.len < antag.initial_spawn_req)
-					return "Not enough antagonists ([antag.role_text]), [antag.initial_spawn_req] required and [potential.len] available."
+					return "[potential.len]/[antag.initial_spawn_req] [antag.role_text] players"
 				enemy_count += potential.len
 				if(enemy_count >= required_enemies)
 					return 0
-		return "Not enough antagonists, [required_enemies] required and [enemy_count] available."
+		return "[enemy_count]/[required_enemies] total antag players"
 	else
 		return 0
 
@@ -341,7 +339,7 @@ var/global/list/additional_antag_types = list()
 /datum/game_mode/proc/check_win() //universal trigger to be called at mob death, nuke explosion, etc. To be called from everywhere.
 	return 0
 
-/datum/game_mode/proc/get_players_for_role(var/antag_id)
+/datum/game_mode/proc/get_players_for_role(antag_id)
 	var/list/players = list()
 	var/list/candidates = list()
 
@@ -418,7 +416,6 @@ var/global/list/additional_antag_types = list()
 				antag_templates |= antag
 
 	shuffle(antag_templates) //In the case of multiple antag types
-	newscaster_announcements = pick(newscaster_standard_feeds)
 
 // Manipulates the end-game cinematic in conjunction with GLOB.cinematic
 /datum/game_mode/proc/nuke_act(obj/screen/cinematic_screen, station_missed = 0)
@@ -434,7 +431,7 @@ var/global/list/additional_antag_types = list()
 		if(!station_missed)
 			end = cinematic_icon_states[2]
 			to_flick = "station_explode_fade_red"
-			for(var/mob/living/M in GLOB.living_mob_list_)
+			for(var/mob/living/M in GLOB.alive_mobs)
 				if(is_station_turf(get_turf(M)))
 					M.death()//No mercy
 		if(end)
@@ -448,8 +445,8 @@ var/global/list/additional_antag_types = list()
 //////////////////////////
 //Reports player logouts//
 //////////////////////////
-proc/display_roundstart_logout_report()
-	var/msg = "<span class='notice'><b>Roundstart logout report</b>\n\n"
+/proc/display_roundstart_logout_report()
+	var/msg = "<b>Roundstart logout report</b>\n\n"
 	for(var/mob/living/L in SSmobs.mob_list)
 
 		if(L.ckey)
@@ -459,11 +456,11 @@ proc/display_roundstart_logout_report()
 					found = 1
 					break
 			if(!found)
-				msg += "<b>[L.name]</b> ([L.ckey]), the [L.job] (<font color='#ffcc00'><b>Disconnected</b></font>)\n"
+				msg += "<b>[L.name]</b> ([L.ckey]), the [L.job] ([SPAN_COLOR("#ffcc00", "<b>Disconnected</b>")])\n"
 
 		if(L.ckey && L.client)
 			if(L.client.inactivity >= (ROUNDSTART_LOGOUT_REPORT_TIME / 2))	//Connected, but inactive (alt+tabbed or something)
-				msg += "<b>[L.name]</b> ([L.ckey]), the [L.job] (<font color='#ffcc00'><b>Connected, Inactive</b></font>)\n"
+				msg += "<b>[L.name]</b> ([L.ckey]), the [L.job] ([SPAN_COLOR("#ffcc00", "<b>Connected, Inactive</b>")])\n"
 				continue //AFK client
 			if(L.admin_paralyzed)
 				msg += "<b>[L.name]</b> ([L.ckey]), the [L.job] (Admin paralyzed)\n"
@@ -484,19 +481,19 @@ proc/display_roundstart_logout_report()
 					continue //Dead mob, ghost abandoned
 				else
 					if(D.can_reenter_corpse)
-						msg += "<b>[L.name]</b> ([ckey(D.mind.key)]), the [L.job] (<font color='red'><b>Adminghosted</b></font>)\n"
+						msg += "<b>[L.name]</b> ([ckey(D.mind.key)]), the [L.job] ([SPAN_COLOR("red", "<b>Adminghosted</b>")])\n"
 						continue //Lolwhat
 					else
-						msg += "<b>[L.name]</b> ([ckey(D.mind.key)]), the [L.job] (<font color='red'><b>Ghosted</b></font>)\n"
+						msg += "<b>[L.name]</b> ([ckey(D.mind.key)]), the [L.job] ([SPAN_COLOR("red", "<b>Ghosted</b>")])\n"
 						continue //Ghosted while alive
 
-	msg += "</span>" // close the span from right at the top
+	msg = SPAN_NOTICE(msg)
 
 	for(var/mob/M in SSmobs.mob_list)
 		if(M.client && M.client.holder)
 			to_chat(M, msg)
 
-/proc/show_objectives(var/datum/mind/player)
+/proc/show_objectives(datum/mind/player)
 
 	if(!player || !player.current) return
 
@@ -504,7 +501,7 @@ proc/display_roundstart_logout_report()
 		return
 
 	var/obj_count = 1
-	to_chat(player.current, "<span class='notice'>Your current objectives:</span>")
+	to_chat(player.current, SPAN_NOTICE("Your current objectives:"))
 	for(var/datum/objective/objective in player.objectives)
 		to_chat(player.current, "<B>Objective #[obj_count]</B>: [objective.explanation_text]")
 		obj_count++

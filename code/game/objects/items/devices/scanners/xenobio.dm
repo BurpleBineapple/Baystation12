@@ -27,7 +27,7 @@
 	scan_data = xenobio_scan_results(O)
 	user.show_message(SPAN_NOTICE(scan_data))
 
-/proc/list_gases(var/gases)
+/proc/list_gases(gases)
 	. = list()
 	for(var/g in gases)
 		. += "[gas_data.name[g]] ([gases[g]]%)"
@@ -65,15 +65,15 @@
 				GLOB.stat_fauna_scanned |= "[P.name]-[A.type]"
 				. += "New xenofauna species discovered!"
 				break
-	else if(istype(target, /mob/living/carbon/slime/))
+	else if(istype(target, /mob/living/carbon/slime))
 		var/mob/living/carbon/slime/T = target
 		. += "Slime scan result for \the [T]:"
 		. += "[T.colour] [T.is_adult ? "adult" : "baby"] slime"
 		. += "Nutrition:\t[T.nutrition]/[T.get_max_nutrition()]"
 		if(T.nutrition < T.get_starve_nutrition())
-			. += "<span class='alert'>Warning:\tthe slime is starving!</span>"
+			. += SPAN_CLASS("alert", "Warning:\tthe slime is starving!")
 		else if (T.nutrition < T.get_hunger_nutrition())
-			. += "<span class='warning'>Warning:\tthe slime is hungry.</span>"
+			. += SPAN_WARNING("Warning:\tthe slime is hungry.")
 		. += "Electric charge strength:\t[T.powerlevel]"
 		. += "Health:\t[round((T.health * 100) / T.maxHealth)]%"
 

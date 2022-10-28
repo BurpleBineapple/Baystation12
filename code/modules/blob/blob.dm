@@ -1,3 +1,10 @@
+// Types that blobs should not be allowed to attack. Primarily for gameplay reasons - No explosions or hellgas leaks for example.
+#define BLOB_BANNED_TARGET_TYPES list(\
+	/obj/machinery/portable_atmospherics,\
+	/obj/structure/reagent_dispensers/fueltank\
+)
+
+
 /obj/effect/blob
 	name = "pulsating mass"
 	desc = "A pulsating mass of interwoven tendrils."
@@ -48,7 +55,7 @@
 	STOP_PROCESSING(SSobj, src)
 	. = ..()
 
-/obj/effect/blob/CanPass(var/atom/movable/mover, var/turf/target, var/height = 0, var/air_group = 0)
+/obj/effect/blob/CanPass(atom/movable/mover, turf/target, height = 0, air_group = 0)
 	if(air_group || height == 0)
 		return 1
 	return 0
@@ -66,11 +73,9 @@
 		return
 	attempt_attack(GLOB.alldirs)
 
-/obj/effect/blob/handle_death_change(new_death_state)
-	. = ..()
-	if (new_death_state)
-		playsound(loc, 'sound/effects/splat.ogg', 50, 1)
-		qdel(src)
+/obj/effect/blob/on_death()
+	playsound(loc, 'sound/effects/splat.ogg', 50, 1)
+	qdel(src)
 
 /obj/effect/blob/post_health_change(health_mod, damage_type)
 	update_icon()
@@ -84,16 +89,17 @@
 		return
 
 	var/damage = rand(damage_min, damage_max)
-	var/damage_type = pick(BRUTE, BURN)
+	var/damage_type = pick(DAMAGE_BRUTE, DAMAGE_BURN)
 
-	if (T.density && T.is_alive())
+	if (T.density && !T.health_dead)
+		visible_message(SPAN_DANGER("A tendril flies out from \the [src] and smashes into \the [T]!"))
 		playsound(loc, 'sound/effects/attackblob.ogg', 50, 1)
 		T.damage_health(damage)
 		return
 
 	for (var/obj/machinery/door/D in T)
 		if (D.density)
-			if (D.is_broken())
+			if (MACHINE_IS_BROKEN(D))
 				D.open(TRUE)
 				return
 			playsound(loc, 'sound/effects/attackblob.ogg', 50, 1)
@@ -106,7 +112,7 @@
 		return
 
 	var/obj/machinery/camera/CA = locate() in T
-	if (CA && !CA.is_broken())
+	if (CA && !MACHINE_IS_BROKEN(CA))
 		playsound(loc, 'sound/effects/attackblob.ogg', 50, 1)
 		CA.take_damage(30)
 		return
@@ -121,13 +127,19 @@
 			sound_played = TRUE
 		attack_living(L)
 
+	// If any atoms on the turf are dense, we should stop after the loop. This allows the blob to hit everything while stopping it from expanding onto the tile.
+	var/density_check = FALSE
 	for (var/atom/A in T)
-		if (A.density && A.can_damage_health(damage, damage_type))
+		if (A.can_damage_health(damage, damage_type) && !(A.type in BLOB_BANNED_TARGET_TYPES))
 			visible_message(SPAN_DANGER("A tendril flies out from \the [src] and smashes into \the [A]!"))
 			if (!sound_played)
 				playsound(loc, 'sound/effects/attackblob.ogg', 50, 1)
-			A.damage_health(damage, damage_type)
-			return
+			A.damage_health(damage, damage_type, skip_can_damage_check = TRUE)
+		if (A.density)
+			density_check = TRUE
+
+	if (density_check)
+		return
 
 	if (!(locate(/obj/effect/blob/core) in range(T, 2)) && prob(secondary_core_growth_chance))
 		new /obj/effect/blob/core/secondary (T)
@@ -135,7 +147,7 @@
 		new expandType(T, min(get_current_health(), 30))
 
 
-/obj/effect/blob/proc/pulse(var/forceLeft, var/list/dirs)
+/obj/effect/blob/proc/pulse(forceLeft, list/dirs)
 	sleep(4)
 	var/pushDir = pick(dirs)
 	var/turf/T = get_step(src, pushDir)
@@ -147,15 +159,15 @@
 	if(forceLeft)
 		B.pulse(forceLeft - 1, dirs)
 
-/obj/effect/blob/proc/attack_living(var/mob/living/L)
+/obj/effect/blob/proc/attack_living(mob/living/L)
 	if(!L)
 		return
-	var/blob_damage = pick(BRUTE, BURN)
+	var/blob_damage = pick(DAMAGE_BRUTE, DAMAGE_BURN)
 	L.visible_message(SPAN_DANGER("A tendril flies out from \the [src] and smashes into \the [L]!"), SPAN_DANGER("A tendril flies out from \the [src] and smashes into you!"))
 	playsound(loc, 'sound/effects/attackblob.ogg', 50, 1)
 	L.apply_damage(rand(damage_min, damage_max), blob_damage, used_weapon = "blob tendril")
 
-/obj/effect/blob/proc/attempt_attack(var/list/dirs)
+/obj/effect/blob/proc/attempt_attack(list/dirs)
 	var/attackDir = pick(dirs)
 	var/turf/T = get_step(src, attackDir)
 	for(var/mob/living/victim in T)
@@ -167,7 +179,7 @@
 	if(!Proj)
 		return
 	var/damage = Proj.damage
-	if (Proj.damage_type == BURN)
+	if (Proj.damage_type == DAMAGE_BURN)
 		damage = round(damage / laser_resist)
 	playsound(damage_hitsound, src, 75)
 	damage_health(damage, Proj.damage_type)
@@ -270,7 +282,7 @@ regen() will cover update_icon() for this proc
 			if(!reported_low_damage)
 				report_shield_status("low")
 
-/obj/effect/blob/core/proc/report_shield_status(var/status)
+/obj/effect/blob/core/proc/report_shield_status(status)
 	if(status == "low")
 		visible_message(SPAN_DANGER("The [src]'s tendril shield fails, leaving the nucleus vulnerable!"), 3)
 		reported_low_damage = TRUE
@@ -356,7 +368,7 @@ regen() will cover update_icon() for this proc
 		else
 			icon_state = "blob_damaged"
 
-/obj/effect/blob/shield/CanPass(var/atom/movable/mover, var/turf/target, var/height = 0, var/air_group = 0)
+/obj/effect/blob/shield/CanPass(atom/movable/mover, turf/target, height = 0, air_group = 0)
 	return !density
 
 /obj/effect/blob/ravaging
@@ -394,7 +406,7 @@ regen() will cover update_icon() for this proc
 				origin_tech = list(TECH_MATERIAL = 2)
 			if("fire")
 				desc = "A tendril removed from an asteroclast. It's hot to the touch."
-				damtype = BURN
+				damtype = DAMAGE_BURN
 				force = 15
 				color = COLOR_AMBER
 				origin_tech = list(TECH_POWER = 2)
@@ -424,3 +436,6 @@ regen() will cover update_icon() for this proc
 	desc = "A sample taken from an asteroclast's auxiliary nucleus."
 	icon_state = "core_sample_2"
 	origin_tech = list(TECH_MATERIAL = 2, TECH_BLUESPACE = 3, TECH_BIO = 4)
+
+
+#undef BLOB_BANNED_TARGET_TYPES

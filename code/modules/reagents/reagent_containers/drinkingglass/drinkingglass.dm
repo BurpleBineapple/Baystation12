@@ -1,8 +1,8 @@
-/var/const/DRINK_FIZZ = "fizz"
-/var/const/DRINK_ICE = "ice"
-/var/const/DRINK_VAPOR = "vapor"
-/var/const/DRINK_ICON_DEFAULT = ""
-/var/const/DRINK_ICON_NOISY = "noise"
+var/global/const/DRINK_FIZZ = "fizz"
+var/global/const/DRINK_ICE = "ice"
+var/global/const/DRINK_VAPOR = "vapor"
+var/global/const/DRINK_ICON_DEFAULT = ""
+var/global/const/DRINK_ICON_NOISY = "noise"
 
 /obj/item/reagent_containers/food/drinks/glass2
 	name = "glass" // Name when empty
@@ -19,7 +19,7 @@
 
 	var/rim_pos // Position of the rim for fruit slices. list(y, x_left, x_right)
 	var/filling_overlayed //if filling should go on top of the icon (e.g. opaque cups)
-	var/global/list/filling_icons_cache = list()
+	var/static/list/filling_icons_cache = list()
 
 	center_of_mass ="x=16;y=9"
 
@@ -202,11 +202,7 @@
 			var/list/rim_pos_data = cached_key_number_decode(rim_pos)
 			var/fsy = rim_pos_data["y"] - 20
 			var/fsx = rim_pos_data[side == "left" ? "x_left" : "x_right"] - 16
-
-			var/matrix/M = matrix()
-			M.Scale(0.5)
-			M.Translate(fsx, fsy)
-			I.transform = M
+			I.SetTransform(scale = 0.5, offset_x = fsx, offset_y = fsy)
 			underlays += I
 		else continue
 		side = "right"
@@ -219,14 +215,14 @@
 /obj/item/reagent_containers/food/drinks/glass2/attackby(obj/item/W, mob/user)
 	if(istype(W, /obj/item/material/kitchen/utensil/spoon))
 		if(user.a_intent == I_HURT)
-			user.visible_message("<span class='warning'>[user] bashes \the [src] with a spoon, shattering it to pieces! What a rube.</span>")
+			user.visible_message(SPAN_WARNING("[user] bashes \the [src] with a spoon, shattering it to pieces! What a rube."))
 			playsound(src, "shatter", 30, 1)
 			if(reagents)
-				user.visible_message("<span class='notice'>The contents of \the [src] splash all over [user]!</span>")
+				user.visible_message(SPAN_NOTICE("The contents of \the [src] splash all over [user]!"))
 				reagents.splash(user, reagents.total_volume)
 			qdel(src)
 			return
-		user.visible_message("<span class='notice'>[user] gently strikes \the [src] with a spoon, calling the room to attention.</span>")
+		user.visible_message(SPAN_NOTICE("[user] gently strikes \the [src] with a spoon, calling the room to attention."))
 		playsound(src, "sound/items/wineglass.ogg", 65, 1)
 	else return ..()
 

@@ -24,7 +24,7 @@
 
 	. = ..()
 
-/obj/structure/bed/roller/ironingboard/proc/remove_item(var/obj/item/I)
+/obj/structure/bed/roller/ironingboard/proc/remove_item(obj/item/I)
 	if(I == cloth)
 		cloth = null
 	else if(I == holding)
@@ -45,7 +45,7 @@
 /obj/structure/bed/roller/ironingboard/examine(mob/user)
 	. = ..()
 	if(cloth)
-		to_chat(user, "<span class='notice'>\The [icon2html(cloth, user)] [cloth] lies on it.</span>")
+		to_chat(user, SPAN_NOTICE("\The [icon2html(cloth, user)] [cloth] lies on it."))
 
 /obj/structure/bed/roller/ironingboard/on_update_icon()
 	if(density)
@@ -59,19 +59,19 @@
 	if(cloth)
 		overlays += new /icon(cloth.icon, cloth.icon_state)
 
-/obj/structure/bed/roller/ironingboard/attackby(var/obj/item/I, var/mob/user)
+/obj/structure/bed/roller/ironingboard/attackby(obj/item/I, mob/user)
 	if(!density)
 		if(istype(I,/obj/item/clothing) || istype(I,/obj/item/ironingiron))
-			to_chat(user, "<span class='notice'>[src] isn't deployed!</span>")
+			to_chat(user, SPAN_NOTICE("[src] isn't deployed!"))
 			return
 		return ..()
 
 	if(istype(I,/obj/item/clothing))
 		if(cloth)
-			to_chat(user, "<span class='notice'>[cloth] is already on the ironing table!</span>")
+			to_chat(user, SPAN_NOTICE("[cloth] is already on the ironing table!"))
 			return
 		if(buckled_mob)
-			to_chat(user, "<span class='notice'>[buckled_mob] is already on the ironing table!</span>")
+			to_chat(user, SPAN_NOTICE("[buckled_mob] is already on the ironing table!"))
 			return
 
 		if(user.unEquip(I, src))
@@ -88,10 +88,10 @@
 			var/zone = user.zone_sel.selecting
 			var/parsed = parse_zone(zone)
 
-			visible_message("<span class='danger'>[user] begins ironing [src.buckled_mob]'s [parsed]!</span>", "<span class='danger'>You begin ironing [buckled_mob]'s [parsed]!</span>")
-			if(!do_after(user, 40, src))
+			visible_message(SPAN_DANGER("[user] begins ironing [src.buckled_mob]'s [parsed]!"), SPAN_DANGER("You begin ironing [buckled_mob]'s [parsed]!"))
+			if(!do_after(user, 4 SECONDS, src, DO_PUBLIC_UNIQUE))
 				return
-			visible_message("<span class='danger'>[user] irons [src.buckled_mob]'s [parsed]!</span>", "<span class='danger'>You iron [buckled_mob]'s [parsed]!</span>")
+			visible_message(SPAN_DANGER("[user] irons [src.buckled_mob]'s [parsed]!"), SPAN_DANGER("You iron [buckled_mob]'s [parsed]!"))
 
 			var/obj/item/organ/external/affecting = H.get_organ(zone)
 			affecting.take_external_damage(0, 15, used_weapon = "Hot metal")
@@ -103,12 +103,12 @@
 				holding = R
 				GLOB.destroyed_event.register(I, src, /obj/structure/bed/roller/ironingboard/proc/remove_item)
 				update_icon()
-				return	
-			to_chat(user, "<span class='notice'>There isn't anything on the ironing board.</span>")
+				return
+			to_chat(user, SPAN_NOTICE("There isn't anything on the ironing board."))
 			return
 
 		visible_message("[user] begins ironing [cloth].")
-		if(!do_after(user, 40, src))
+		if(!do_after(user, 4 SECONDS, src, DO_PUBLIC_UNIQUE))
 			return
 
 		visible_message("[user] finishes ironing [cloth].")
@@ -117,7 +117,7 @@
 
 	..()
 
-/obj/structure/bed/roller/ironingboard/attack_hand(var/mob/user)
+/obj/structure/bed/roller/ironingboard/attack_hand(mob/user)
 	if(density) // check if it's deployed
 		if(holding && user.put_in_hands(holding))
 			remove_item(holding)

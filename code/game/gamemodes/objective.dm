@@ -11,7 +11,7 @@ var/global/list/all_objectives = list()
 	//If they are focused on a particular number. Steal objectives have their own counter.
 	var/target_amount = 0
 
-/datum/objective/New(var/text)
+/datum/objective/New(text)
 	all_objectives |= src
 	if(text)
 		explanation_text = text
@@ -218,7 +218,7 @@ var/global/list/all_objectives = list()
 	var/obj/item/steal_target
 	var/target_name
 
-	var/global/possible_items[] = list(
+	var/static/possible_items[] = list(
 		"the captain's antique laser gun" = /obj/item/gun/energy/captain,
 		"a bluespace rift generator" = /obj/item/integrated_circuit/manipulation/bluespace_rift,
 		"an RCD" = /obj/item/rcd,
@@ -241,7 +241,7 @@ var/global/list/all_objectives = list()
 		"an ablative armor vest" = /obj/item/clothing/suit/armor/laserproof,
 	)
 
-	var/global/possible_items_special[] = list(
+	var/static/possible_items_special[] = list(
 		/*"nuclear authentication disk" = /obj/item/disk/nuclear,*///Broken with the change to nuke disk making it respawn on z level change.
 		"nuclear gun" = /obj/item/gun/energy/gun/nuclear,
 		"diamond drill" = /obj/item/pickaxe/diamonddrill,
@@ -302,7 +302,7 @@ var/global/list/all_objectives = list()
 
 // Changeling Absorb //
 
-/datum/objective/absorb/proc/gen_amount_goal(var/lowbound = 4, var/highbound = 6)
+/datum/objective/absorb/proc/gen_amount_goal(lowbound = 4, highbound = 6)
 	target_amount = rand (lowbound,highbound)
 	var/n_p = 1 //autowin
 	if (GAME_STATE == RUNLEVEL_SETUP)

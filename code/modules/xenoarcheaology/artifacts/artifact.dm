@@ -16,7 +16,7 @@
 	///TRUE if artifact can be damaged, FALSE otherwise.
 	var/can_damage = FALSE
 	///The damage type that can harm the artifact.
-	var/damage_type = DAM_SHARP
+	var/damage_type = DAMAGE_FLAG_SHARP
 	///Minimum force needed to cause damage. Only applicable when being melee'd.
 	var/min_force = 5
 	///Extra descriptor added to artifact analyzer results.
@@ -78,14 +78,21 @@
 			effect.DoEffectTouch(arglist(args.Copy(2)))
 
 /obj/machinery/artifact/Process()
-	var/turf/T = loc
-	if(!istype(T)) 	// We're inside a container or on null turf, either way stop processing effects
-		return
+	if (!isturf(loc)) // We're not on a valid turf, check for the special conditions of an anomaly container
+		if (istype(loc, /obj/machinery/anomaly_container))
+			var/obj/machinery/anomaly_container/container = loc
+			if (container.contained == src && !container.broken)
+				// We're inside an anomaly container, we're the contained anomaly, and the container is not broken.
+				return
+		else
+			// We're not inside an anomaly container nor a turf
+			return
+	// We're on a turf or inside a broken or invalid anomaly container
 
 	if(pulledby)
 		check_triggers(/datum/artifact_trigger/proc/on_touch, pulledby)
 
-	var/datum/gas_mixture/enivonment = T.return_air()
+	var/datum/gas_mixture/enivonment = loc.return_air()
 	if(enivonment.return_pressure() >= SOUND_MINIMUM_PRESSURE)
 		check_triggers(/datum/artifact_trigger/proc/on_gas_exposure, enivonment)
 
@@ -110,16 +117,16 @@
 	..()
 	check_triggers(/datum/artifact_trigger/proc/on_bump, M)
 
-/obj/machinery/artifact/bullet_act(var/obj/item/projectile/P)
+/obj/machinery/artifact/bullet_act(obj/item/projectile/P)
 	check_triggers(/datum/artifact_trigger/proc/on_hit, P)
 
 /obj/machinery/artifact/ex_act(severity)
 	if(check_triggers(/datum/artifact_trigger/proc/on_explosion, severity))
 		return
 	switch(severity)
-		if(1)
+		if(EX_ACT_DEVASTATING)
 			qdel(src)
-		if(2)
+		if(EX_ACT_HEAVY)
 			if (prob(50))
 				qdel(src)
 
@@ -163,13 +170,13 @@
 	health = rand(100, 200)
 	max_health = health
 
-	var/damage_types = list(DAM_SHARP, DAM_BULLET, DAM_EDGE, DAM_LASER)
+	var/damage_types = list(DAMAGE_FLAG_SHARP, DAMAGE_FLAG_BULLET, DAMAGE_FLAG_EDGE, DAMAGE_FLAG_LASER)
 	for (var/datum/artifact_effect/A in list(my_effect, secondary_effect))
 		if (istype(A.trigger, /datum/artifact_trigger/force))
-			damage_types -= list(DAM_SHARP, DAM_BULLET, DAM_EDGE)
+			damage_types -= list(DAMAGE_FLAG_SHARP, DAMAGE_FLAG_BULLET, DAMAGE_FLAG_EDGE)
 
 		if (istype(A.trigger, /datum/artifact_trigger/energy))
-			damage_types -= DAM_LASER
+			damage_types -= DAMAGE_FLAG_LASER
 
 		if (!length(damage_types)) //can't trigger effects without damaging us
 			can_damage = FALSE
@@ -190,13 +197,13 @@
 
 	damage_desc = "The physical structure is vulnerable to "
 	switch(damage_type)
-		if (DAM_SHARP)
+		if (DAMAGE_FLAG_SHARP)
 			damage_desc += "physical attack from serrated objects."
-		if (DAM_BULLET)
+		if (DAMAGE_FLAG_BULLET)
 			damage_desc += "high speed kinetic impact."
-		if (DAM_EDGE)
+		if (DAMAGE_FLAG_EDGE)
 			damage_desc += "physical strikes from edged objects."
-		if (DAM_LASER)
+		if (DAMAGE_FLAG_LASER)
 			damage_desc += "concentrated high-energy bursts."
 
 /**
@@ -259,7 +266,7 @@
 	. = ..()
 
 	user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
-	if (W.sharp && damage_type == DAM_SHARP || W.edge && damage_type == DAM_EDGE)
+	if (W.sharp && damage_type == DAMAGE_FLAG_SHARP || W.edge && damage_type == DAMAGE_FLAG_EDGE)
 		user.do_attack_animation(src)
 
 		if (W.force < min_force)

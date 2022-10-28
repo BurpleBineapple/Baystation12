@@ -4,7 +4,7 @@
 		eyes.update_colour()
 		regenerate_icons()
 
-/mob/living/carbon/human/proc/get_bodypart_name(var/zone)
+/mob/living/carbon/human/proc/get_bodypart_name(zone)
 	var/obj/item/organ/external/E = get_organ(zone)
 	if(E) . = E.name
 
@@ -150,7 +150,7 @@
 		Weaken(3) //can't emote while weakened, apparently.
 
 /mob/living/carbon/human/proc/handle_grasp()
-	if(!l_hand && !r_hand)
+	if (HandsEmpty())
 		return
 
 	// You should not be able to pick anything up, but stranger things have happened.
@@ -158,7 +158,7 @@
 		for(var/limb_tag in list(BP_L_HAND, BP_L_ARM))
 			var/obj/item/organ/external/E = get_organ(limb_tag)
 			if(!E)
-				visible_message("<span class='danger'>Lacking a functioning left hand, \the [src] drops \the [l_hand].</span>")
+				visible_message(SPAN_DANGER("Lacking a functioning left hand, \the [src] drops \the [l_hand]."))
 				drop_from_inventory(l_hand)
 				break
 
@@ -166,21 +166,21 @@
 		for(var/limb_tag in list(BP_R_HAND, BP_R_ARM))
 			var/obj/item/organ/external/E = get_organ(limb_tag)
 			if(!E)
-				visible_message("<span class='danger'>Lacking a functioning right hand, \the [src] drops \the [r_hand].</span>")
+				visible_message(SPAN_DANGER("Lacking a functioning right hand, \the [src] drops \the [r_hand]."))
 				drop_from_inventory(r_hand)
 				break
 
 	// Check again...
-	if(!l_hand && !r_hand)
+	if (HandsEmpty())
 		return
 
 	for (var/obj/item/organ/external/E in organs)
 		if(!E || !(E.limb_flags & ORGAN_FLAG_CAN_GRASP))
 			continue
-		if(((E.is_broken() || E.is_dislocated()) && !E.splinted) || E.is_malfunctioning())
+		if(((E.is_broken() || E.is_dislocated()) && !E.splinted))
 			grasp_damage_disarm(E)
 
-/mob/living/carbon/human/proc/stance_damage_prone(var/obj/item/organ/external/affected)
+/mob/living/carbon/human/proc/stance_damage_prone(obj/item/organ/external/affected)
 
 	if(affected)
 		switch(affected.body_part)
@@ -198,7 +198,7 @@
 				return
 	Weaken(4)
 
-/mob/living/carbon/human/proc/grasp_damage_disarm(var/obj/item/organ/external/affected)
+/mob/living/carbon/human/proc/grasp_damage_disarm(obj/item/organ/external/affected)
 	var/disarm_slot
 	switch(affected.body_part)
 		if(HAND_LEFT, ARM_LEFT)

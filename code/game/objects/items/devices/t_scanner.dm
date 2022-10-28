@@ -18,7 +18,7 @@
 	var/list/active_scanned = list() //assoc list of objects being scanned, mapped to their overlay
 	var/client/user_client //since making sure overlays are properly added and removed is pretty important, so we track the current user explicitly
 
-	var/global/list/overlay_cache = list() //cache recent overlays
+	var/static/list/overlay_cache = list() //cache recent overlays
 
 /obj/item/device/t_scanner/Destroy()
 	. = ..()
@@ -29,8 +29,9 @@
 	icon_state = "t-ray[on]"
 
 /obj/item/device/t_scanner/emp_act()
-	audible_message("<span class = 'notice'> \The [src] buzzes oddly.</span>")
+	audible_message(SPAN_NOTICE(" \The [src] buzzes oddly."))
 	set_active(FALSE)
+	..()
 
 /obj/item/device/t_scanner/attack_self(mob/user)
 	set_active(!on)
@@ -39,9 +40,9 @@
 /obj/item/device/t_scanner/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
 	var/obj/structure/disposalpipe/D = target
 	if(D && istype(D))
-		to_chat(user, "<span class='info'>Pipe segment integrity: [100 - D.get_damage_percentage()]%</span>")
+		to_chat(user, SPAN_INFO("Pipe segment integrity: [100 - D.get_damage_percentage()]%"))
 
-/obj/item/device/t_scanner/proc/set_active(var/active)
+/obj/item/device/t_scanner/proc/set_active(active)
 	on = active
 	if(on)
 		START_PROCESSING(SSfastprocess, src)
@@ -81,7 +82,7 @@
 		active_scanned -= O
 
 //creates a new overlay for a scanned object
-/obj/item/device/t_scanner/proc/get_overlay(var/atom/movable/scanned)
+/obj/item/device/t_scanner/proc/get_overlay(atom/movable/scanned)
 	//Use a cache so we don't create a whole bunch of new images just because someone's walking back and forth in a room.
 	//Also means that images are reused if multiple people are using t-rays to look at the same objects.
 	if(scanned in overlay_cache)
@@ -102,8 +103,8 @@
 		if(ismob(scanned))
 			if(ishuman(scanned))
 				var/mob/living/carbon/human/H = scanned
-				if(H.species.appearance_flags & HAS_SKIN_COLOR)
-					I.color = rgb(H.r_skin, H.g_skin, H.b_skin)
+				if(H.species.appearance_flags & SPECIES_APPEARANCE_HAS_SKIN_COLOR)
+					I.color = H.skin_color
 					I.icon = 'icons/mob/mob.dmi'
 					I.icon_state = "phaseout"
 			var/mob/M = scanned
@@ -120,7 +121,7 @@
 	if(overlay_cache.len > OVERLAY_CACHE_LEN)
 		overlay_cache.Cut(1, overlay_cache.len-OVERLAY_CACHE_LEN-1)
 
-/obj/item/device/t_scanner/proc/get_scanned_objects(var/scan_dist)
+/obj/item/device/t_scanner/proc/get_scanned_objects(scan_dist)
 	. = list()
 
 	var/turf/center = get_turf(src.loc)
@@ -149,7 +150,7 @@
 
 
 
-/obj/item/device/t_scanner/proc/set_user_client(var/client/new_client)
+/obj/item/device/t_scanner/proc/set_user_client(client/new_client)
 	if(new_client == user_client)
 		return
 	if(user_client)

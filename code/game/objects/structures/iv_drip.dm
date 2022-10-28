@@ -1,6 +1,7 @@
 /obj/structure/iv_drip
 	name = "\improper IV drip"
 	icon = 'icons/obj/iv_drip.dmi'
+	icon_state = "unhooked"
 	anchored = FALSE
 	density = FALSE
 	var/mob/living/carbon/human/attached
@@ -14,11 +15,11 @@
 	set category = "Object"
 	set src in range(1)
 	if(!CanPhysicallyInteract(usr))
-		to_chat(usr, "<span class='notice'>You're in no condition to do that!'</span>")
+		to_chat(usr, SPAN_NOTICE("You're in no condition to do that!'"))
 		return
 	var/N = input("Amount per transfer from this:","[src]") as null|anything in transfer_amounts
 	if(!CanPhysicallyInteract(usr)) // because input takes time and the situation can change
-		to_chat(usr, "<span class='notice'>You're in no condition to do that!'</span>")
+		to_chat(usr, SPAN_NOTICE("You're in no condition to do that!'"))
 		return
 	if(N)
 		transfer_amount = N
@@ -27,7 +28,7 @@
 	if(attached)
 		icon_state = "hooked"
 	else
-		icon_state = ""
+		icon_state = "unhooked"
 
 	overlays.Cut()
 
@@ -60,7 +61,7 @@
 	if(!CanMouseDrop(over_object))
 		return
 	if(attached)
-		drip_detach()
+		drip_detach(usr)
 	else if(ishuman(over_object))
 		hook_up(over_object, usr)
 
@@ -94,7 +95,7 @@
 
 	if(!beaker)
 		return
-	
+
 	//SSObj fires twice as fast as SSMobs, so gotta slow down to not OD our victims.
 	if(SSobj.times_fired % 2)
 		return
@@ -106,7 +107,7 @@
 	else // Take blood
 		var/amount = beaker.reagents.maximum_volume - beaker.reagents.total_volume
 		amount = min(amount, 4)
-		
+
 		if(amount == 0) // If the beaker is full, ping
 			if(prob(5)) visible_message("\The [src] pings.")
 			return
@@ -123,7 +124,7 @@
 
 /obj/structure/iv_drip/attack_hand(mob/user as mob)
 	if(attached)
-		drip_detach()
+		drip_detach(user)
 	else if(beaker)
 		beaker.dropInto(loc)
 		beaker = null
@@ -131,37 +132,44 @@
 	else
 		return ..()
 
-/obj/structure/iv_drip/attack_robot(var/mob/user)
+/obj/structure/iv_drip/attack_robot(mob/user)
 	if(Adjacent(user))
 		attack_hand(user)
 
-/obj/structure/iv_drip/verb/drip_detach()
+/obj/structure/iv_drip/verb/drip_detach_verb()
 	set category = "Object"
 	set name = "Detach IV Drip"
 	set src in range(1)
-	
-	if(!attached)
-		return
-		
-	if(!CanPhysicallyInteractWith(usr, src))
-		to_chat(usr, SPAN_NOTICE("You're in no condition to do that!"))
+
+	drip_detach(usr)
+
+/obj/structure/iv_drip/proc/drip_detach(mob/user)
+	if (!attached)
+		to_chat(user, SPAN_WARNING("\The [src] is not attached to anything."))
 		return
 
-	if(!usr.skill_check(SKILL_MEDICAL, SKILL_BASIC))
+	if (!CanPhysicallyInteractWith(user, src))
+		to_chat(user, SPAN_WARNING("You're in no condition to do that!"))
+		return
+
+	if (!user.skill_check(SKILL_MEDICAL, SKILL_BASIC))
 		rip_out()
 	else
-		visible_message("\The [attached] is taken off \the [src].")
+		user.visible_message(
+			SPAN_WARNING("\The [user] detaches \the [attached] from \the [src]."),
+			SPAN_NOTICE("You detach \the [attached] from \the [src]."),
+		)
 		attached = null
-	
+
 	queue_icon_update()
-	STOP_PROCESSING(SSobj,src)
-		
+	STOP_PROCESSING(SSobj, src)
+
 /obj/structure/iv_drip/verb/toggle_mode()
 	set category = "Object"
 	set name = "Toggle IV Mode"
 	set src in view(1)
 	if(!CanPhysicallyInteract(usr))
-		to_chat(usr, "<span class='notice'>You're in no condition to do that!'</span>")
+		to_chat(usr, SPAN_NOTICE("You're in no condition to do that!'"))
 		return
 	mode = !mode
 	to_chat(usr, "The IV drip is now [mode ? "injecting" : "taking blood"].")
@@ -169,7 +177,7 @@
 /obj/structure/iv_drip/examine(mob/user, distance)
 	. = ..()
 
-	if (distance >= 2) 
+	if (distance >= 2)
 		return
 
 	to_chat(user, "The IV drip is [mode ? "injecting" : "taking blood"].")
@@ -177,17 +185,17 @@
 
 	if(beaker)
 		if(beaker.reagents && beaker.reagents.total_volume)
-			to_chat(usr, "<span class='notice'>Attached is \a [beaker] with [beaker.reagents.total_volume] units of liquid.</span>")
+			to_chat(usr, SPAN_NOTICE("Attached is \a [beaker] with [beaker.reagents.total_volume] units of liquid."))
 		else
-			to_chat(usr, "<span class='notice'>Attached is an empty [beaker].</span>")
+			to_chat(usr, SPAN_NOTICE("Attached is an empty [beaker]."))
 	else
-		to_chat(usr, "<span class='notice'>No chemicals are attached.</span>")
+		to_chat(usr, SPAN_NOTICE("No chemicals are attached."))
 
-	to_chat(usr, "<span class='notice'>[attached ? attached : "No one"] is hooked up to it.</span>")
+	to_chat(usr, SPAN_NOTICE("[attached ? attached : "No one"] is hooked up to it."))
 
 /obj/structure/iv_drip/proc/rip_out()
 	visible_message("The needle is ripped out of [src.attached], doesn't that hurt?")
-	attached.apply_damage(1, BRUTE, pick(BP_R_ARM, BP_L_ARM), damage_flags=DAM_SHARP)
+	attached.apply_damage(1, DAMAGE_BRUTE, pick(BP_R_ARM, BP_L_ARM), damage_flags=DAMAGE_FLAG_SHARP)
 	attached = null
 
 /obj/structure/iv_drip/proc/hook_up(mob/living/carbon/human/target, mob/user)
@@ -196,13 +204,13 @@
 		START_PROCESSING(SSobj,src)
 
 /proc/do_IV_hookup(mob/living/carbon/human/target, mob/user, obj/IV)
-	to_chat(user, "<span class='notice'>You start to hook up \the [target] to \the [IV].</span>")
+	to_chat(user, SPAN_NOTICE("You start to hook up \the [target] to \the [IV]."))
 	if(!user.do_skilled(2 SECONDS, SKILL_MEDICAL, target))
 		return FALSE
 
 	if(prob(user.skill_fail_chance(SKILL_MEDICAL, 80, SKILL_BASIC)))
 		user.visible_message("\The [user] fails to find the vein while trying to hook \the [target] up to \the [IV], stabbing them instead!")
-		target.apply_damage(2, BRUTE, pick(BP_R_ARM, BP_L_ARM), damage_flags=DAM_SHARP)
+		target.apply_damage(2, DAMAGE_BRUTE, pick(BP_R_ARM, BP_L_ARM), damage_flags=DAMAGE_FLAG_SHARP)
 		return FALSE
 
 	user.visible_message("\The [user] hooks \the [target] up to \the [IV].")

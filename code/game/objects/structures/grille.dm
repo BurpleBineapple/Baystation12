@@ -30,7 +30,7 @@
 /obj/structure/grille/proc/is_broken()
 	return istype(src, /obj/structure/grille/broken)
 
-/obj/structure/grille/Initialize(mapload, var/new_material)
+/obj/structure/grille/Initialize(mapload, new_material)
 	. = ..()
 	if(!new_material)
 		new_material = init_material
@@ -118,7 +118,7 @@
 		else
 			return !density
 
-/obj/structure/grille/bullet_act(var/obj/item/projectile/Proj)
+/obj/structure/grille/bullet_act(obj/item/projectile/Proj)
 	if(!Proj)	return
 
 	//Flimsy grilles aren't so great at stopping projectiles. However they can absorb some of the impact
@@ -130,7 +130,7 @@
 	//20% chance that the grille provides a bit more cover than usual. Support structure for example might take up 20% of the grille's area.
 	//If they click on the grille itself then we assume they are aiming at the grille itself and the extra cover behaviour is always used.
 	switch(Proj.damage_type)
-		if(BRUTE)
+		if (DAMAGE_BRUTE)
 			//bullets
 			if(Proj.original == src || prob(20))
 				Proj.damage *= clamp(Proj.damage / 60, 0, 0.5)
@@ -139,7 +139,7 @@
 			else
 				Proj.damage *= clamp(Proj.damage / 60, 0, 1)
 				passthrough = 1
-		if(BURN)
+		if (DAMAGE_BURN)
 			//beams and other projectiles are either blocked completely by grilles or stop half the damage.
 			if(!(Proj.original == src || prob(20)))
 				Proj.damage *= 0.5
@@ -147,7 +147,7 @@
 
 	if(passthrough)
 		. = PROJECTILE_CONTINUE
-		damage = clamp((damage - Proj.damage) * (Proj.damage_type == BRUTE ? 0.4 : 1), 0, 10) //if the bullet passes through then the grille avoids most of the damage
+		damage = clamp((damage - Proj.damage) * (Proj.damage_type == DAMAGE_BRUTE ? 0.4 : 1), 0, 10) //if the bullet passes through then the grille avoids most of the damage
 
 	damage_health(damage, Proj.damage_type)
 
@@ -168,8 +168,8 @@
 		if(!shock(user, 90))
 			playsound(loc, 'sound/items/Screwdriver.ogg', 100, 1)
 			anchored = !anchored
-			user.visible_message("<span class='notice'>[user] [anchored ? "fastens" : "unfastens"] the grille.</span>", \
-								 "<span class='notice'>You have [anchored ? "fastened the grille to" : "unfastened the grill from"] the floor.</span>")
+			user.visible_message(SPAN_NOTICE("[user] [anchored ? "fastens" : "unfastens"] the grille."), \
+								 SPAN_NOTICE("You have [anchored ? "fastened the grille to" : "unfastened the grill from"] the floor."))
 			update_connections(1)
 			update_icon()
 		return
@@ -180,33 +180,22 @@
 		if(ST.material.opacity > 0.7)
 			return 0
 
-		var/dir_to_set = 5
-		if(!is_on_frame())
-			if(loc == user.loc)
-				dir_to_set = user.dir
-			else
-				dir_to_set = get_dir(loc, user)
-				if(dir_to_set & (dir_to_set - 1)) //Only works for cardinal direcitons, diagonals aren't supposed to work like this.
-					to_chat(user, "<span class='notice'>You can't reach.</span>")
-					return
-		place_window(user, loc, dir_to_set, ST)
+		place_window(user, loc, ST)
 		return
 
 	if (!(W.obj_flags & OBJ_FLAG_CONDUCTIBLE) || !shock(user, 70))
 		..()
 
-/obj/structure/grille/handle_death_change(new_death_state)
-	if (new_death_state)
-		visible_message(SPAN_WARNING("\The [src] falls to pieces!"))
-		new /obj/item/stack/material/rods(get_turf(src), 1, material.name)
-		new /obj/structure/grille/broken(get_turf(src), material.name)
-		qdel(src)
+/obj/structure/grille/on_death(new_death_state)
+	visible_message(SPAN_WARNING("\The [src] falls to pieces!"))
+	new /obj/item/stack/material/rods(get_turf(src), 1, material.name)
+	new /obj/structure/grille/broken(get_turf(src), material.name)
+	qdel(src)
 
-/obj/structure/grille/broken/handle_death_change(new_death_state)
-	if (new_death_state)
-		visible_message(SPAN_WARNING("The remains of \the [src] break apart!"))
-		new /obj/item/stack/material/rods(get_turf(src), 1, material.name)
-		qdel(src)
+/obj/structure/grille/broken/on_death(new_death_state)
+	visible_message(SPAN_WARNING("The remains of \the [src] break apart!"))
+	new /obj/item/stack/material/rods(get_turf(src), 1, material.name)
+	qdel(src)
 
 // shock user with probability prb (if all connections & power are working)
 // returns 1 if shocked, 0 otherwise
@@ -237,7 +226,7 @@
 
 /obj/structure/grille/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume)
 	if (!is_broken() && exposed_temperature > material.melting_point)
-		damage_health(1, BURN)
+		damage_health(1, DAMAGE_BURN)
 	..()
 
 /obj/structure/grille/cult
@@ -258,16 +247,16 @@
 	if(ST.in_use)
 		return
 	if(ST.get_amount() < 2)
-		to_chat(user, "<span class='warning'>You need at least two rods to do this.</span>")
+		to_chat(user, SPAN_WARNING("You need at least two rods to do this."))
 		return
-	to_chat(user, "<span class='notice'>Assembling grille...</span>")
+	to_chat(user, SPAN_NOTICE("Assembling grille..."))
 	ST.in_use = 1
-	if (!do_after(user, 10))
+	if (!do_after(user, 1 SECOND, loc, DO_REPAIR_CONSTRUCT))
 		ST.in_use = 0
 		return
 	if(!ST.use(2))
 		return
 	var/obj/structure/grille/F = new /obj/structure/grille(loc, ST.material.name)
-	to_chat(user, "<span class='notice'>You assemble a grille</span>")
+	to_chat(user, SPAN_NOTICE("You assemble a grille"))
 	ST.in_use = 0
 	F.add_fingerprint(user)

@@ -13,7 +13,7 @@
 	anchored = TRUE
 	idle_power_usage = 40
 	base_type = /obj/machinery/biogenerator
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	uncreated_component_parts = null
 	stat_immune = 0
 	machine_name = "biogenerator"
@@ -38,7 +38,7 @@
 			/obj/item/reagent_containers/glass/bottle/left4zed = 120,
 			/obj/item/reagent_containers/glass/bottle/robustharvest = 120),
 		"Leather" = list(
-			/obj/item/storage/wallet/leather = 100,
+			/obj/item/storage/wallet = 100,
 			/obj/item/clothing/gloves/thick/botany = 250,
 			/obj/item/storage/belt/utility = 300,
 			/obj/item/storage/backpack/satchel = 400,
@@ -76,14 +76,14 @@
 		return SPAN_NOTICE("You must turn \the [src] off first.")
 	return ..()
 
-/obj/machinery/biogenerator/attackby(var/obj/item/O, var/mob/user)
+/obj/machinery/biogenerator/attackby(obj/item/O, mob/user)
 	if((. = component_attackby(O, user)))
 		return
 	if(processing)
-		to_chat(user, "<span class='notice'>\The [src] is currently processing.</span>")
+		to_chat(user, SPAN_NOTICE("\The [src] is currently processing."))
 	if(istype(O, /obj/item/reagent_containers/glass))
 		if(beaker)
-			to_chat(user, "<span class='notice'>]The [src] is already loaded.</span>")
+			to_chat(user, SPAN_NOTICE("The [src] is already loaded."))
 			return TRUE
 		else if(user.unEquip(O, src))
 			beaker = O
@@ -92,7 +92,7 @@
 			return TRUE
 
 	if(ingredients >= capacity)
-		to_chat(user, "<span class='notice'>\The [src] is already full! Activate it.</span>")
+		to_chat(user, SPAN_NOTICE("\The [src] is already full! Activate it."))
 	else if(istype(O, /obj/item/storage/plants))
 		var/obj/item/storage/plants/P = O
 		var/hadPlants = 0
@@ -101,20 +101,20 @@
 			P.remove_from_storage(G, src, 1) //No UI updates until we are all done.
 			ingredients++
 			if(ingredients >= capacity)
-				to_chat(user, "<span class='notice'>You fill \the [src] to its capacity.</span>")
+				to_chat(user, SPAN_NOTICE("You fill \the [src] to its capacity."))
 				break
 		P.finish_bulk_removal() //Now do the UI stuff once.
 		if(!hadPlants)
-			to_chat(user, "<span class='notice'>\The [P] has no produce inside.</span>")
+			to_chat(user, SPAN_NOTICE("\The [P] has no produce inside."))
 		else if(ingredients < capacity)
-			to_chat(user, "<span class='notice'>You empty \the [P] into \the [src].</span>")
+			to_chat(user, SPAN_NOTICE("You empty \the [P] into \the [src]."))
 
 
 	else if(!istype(O, /obj/item/reagent_containers/food/snacks/grown))
-		to_chat(user, "<span class='notice'>You cannot put this in \the [src].</span>")
+		to_chat(user, SPAN_NOTICE("You cannot put this in \the [src]."))
 	else if(user.unEquip(O, src))
 		ingredients++
-		to_chat(user, "<span class='notice'>You put \the [O] in \the [src]</span>")
+		to_chat(user, SPAN_NOTICE("You put \the [O] in \the [src]"))
 	update_icon()
 
 /**
@@ -122,7 +122,7 @@
  *
  *  See NanoUI documentation for details.
  */
-/obj/machinery/biogenerator/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
+/obj/machinery/biogenerator/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null, force_open = 1)
 	user.set_machine(src)
 	var/list/data = list()
 	data["state"] = state
@@ -188,7 +188,7 @@
 /obj/machinery/biogenerator/proc/activate()
 	if (usr.stat)
 		return
-	if (stat) //NOPOWER etc
+	if (stat) //MACHINE_STAT_NOPOWER etc
 		return
 
 	var/S = 0
@@ -212,7 +212,7 @@
 		state = BG_EMPTY
 	return
 
-/obj/machinery/biogenerator/proc/create_product(var/type, var/path)
+/obj/machinery/biogenerator/proc/create_product(type, path)
 	state = BG_PROCESSING
 	var/cost = products[type][path]
 	cost = round(cost/build_eff)

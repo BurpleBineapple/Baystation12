@@ -22,7 +22,7 @@
 	noblend_objects = list(/obj/machinery/door/window)
 	material = DEFAULT_WALL_MATERIAL
 
-/obj/structure/wall_frame/New(var/new_loc, var/materialtype)
+/obj/structure/wall_frame/New(new_loc, materialtype)
 	..(new_loc)
 
 	if (!materialtype)
@@ -49,9 +49,9 @@
 	. = ..()
 
 	if(paint_color)
-		to_chat(user, "<span class='notice'>It has a smooth coat of paint applied.</span>")
+		to_chat(user, SPAN_NOTICE("It has a smooth coat of paint applied."))
 
-/obj/structure/wall_frame/attackby(var/obj/item/W, var/mob/user)
+/obj/structure/wall_frame/attackby(obj/item/W, mob/user)
 	src.add_fingerprint(user)
 
 	if (user.a_intent == I_HURT)
@@ -62,7 +62,7 @@
 	if(istype(W, /obj/item/stack/material/rods))
 		for(var/obj/structure/window/WINDOW in loc)
 			if(WINDOW.dir == get_dir(src, user))
-				to_chat(user, "<span class='notice'>There is a window in the way.</span>")
+				to_chat(user, SPAN_NOTICE("There is a window in the way."))
 				return
 		place_grille(user, loc, W)
 		return
@@ -72,21 +72,22 @@
 		var/obj/item/stack/material/ST = W
 		if(ST.material.opacity > 0.7)
 			return 0
-		place_window(user, loc, SOUTHWEST, ST)
+
+		place_window(user, loc, ST)
 		return
 
 	if(isWrench(W))
 		for(var/obj/structure/S in loc)
 			if(istype(S, /obj/structure/window))
-				to_chat(user, "<span class='notice'>There is still a window on the low wall!</span>")
+				to_chat(user, SPAN_NOTICE("There is still a window on the low wall!"))
 				return
 			else if(istype(S, /obj/structure/grille))
-				to_chat(user, "<span class='notice'>There is still a grille on the low wall!</span>")
+				to_chat(user, SPAN_NOTICE("There is still a grille on the low wall!"))
 				return
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
-		to_chat(user, "<span class='notice'>Now disassembling the low wall...</span>")
-		if(do_after(user, 40,src))
-			to_chat(user, "<span class='notice'>You dissasembled the low wall!</span>")
+		to_chat(user, SPAN_NOTICE("Now disassembling the low wall..."))
+		if(do_after(user, 4 SECONDS, src, DO_REPAIR_CONSTRUCT))
+			to_chat(user, SPAN_NOTICE("You dissasembled the low wall!"))
 			dismantle()
 		return
 
@@ -95,9 +96,9 @@
 		if(!cutter.slice(user))
 			return
 		playsound(src.loc, 'sound/items/Welder.ogg', 100, 1)
-		to_chat(user, "<span class='notice'>Now slicing through the low wall...</span>")
-		if(do_after(user, 20,src))
-			to_chat(user, "<span class='warning'>You have sliced through the low wall!</span>")
+		to_chat(user, SPAN_NOTICE("Now slicing through the low wall..."))
+		if(do_after(user, 2 SECONDS, src, DO_PUBLIC_UNIQUE))
+			to_chat(user, SPAN_WARNING("You have sliced through the low wall!"))
 			dismantle()
 		return
 
@@ -150,7 +151,7 @@
 			paint_color = adjust_brightness(paint_color, bleach_factor)
 		update_icon()
 
-/obj/structure/wall_frame/hitby(AM as mob|obj, var/datum/thrownthing/TT)
+/obj/structure/wall_frame/hitby(AM as mob|obj, datum/thrownthing/TT)
 	..()
 	var/tforce = 0
 	if(ismob(AM)) // All mobs have a multiplier and a size according to mob_defines.dm
@@ -161,11 +162,10 @@
 		tforce = O.throwforce * (TT.speed/THROWFORCE_SPEED_DIVISOR)
 	if (tforce < 15)
 		return
-	damage_health(tforce, BRUTE)
+	damage_health(tforce, DAMAGE_BRUTE)
 
-/obj/structure/wall_frame/handle_death_change(new_death_state)
-	if (new_death_state)
-		dismantle()
+/obj/structure/wall_frame/on_death()
+	dismantle()
 
 /obj/structure/wall_frame/proc/dismantle()
 	new /obj/item/stack/material/steel(get_turf(src), 3)
@@ -174,7 +174,7 @@
 /obj/structure/wall_frame/get_color()
 	return paint_color
 
-/obj/structure/wall_frame/set_color(var/color)
+/obj/structure/wall_frame/set_color(color)
 	paint_color = color
 	update_icon()
 

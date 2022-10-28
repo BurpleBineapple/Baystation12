@@ -60,13 +60,13 @@
 		else if (T.is_floor())
 			F = T
 
-			if (istype(F.flooring, /decl/flooring/flesh))
+			if (istype(F.flooring, /singleton/flooring/flesh))
 				continue
 
 			if (prob(25))
 				new /obj/effect/gibspawner/human(F)
 
-			F.set_flooring(decls_repository.get_decl(/decl/flooring/flesh))
+			F.set_flooring(GET_SINGLETON(/singleton/flooring/flesh))
 			F.desc = "Disgusting flooring made out of flesh, bone, eyes, and various other human bits and peices."
 
 
@@ -90,8 +90,8 @@
 /datum/artifact_effect/hellportal/proc/hurt_players(send_message = TRUE)
 	for (var/mob/living/carbon/human/H in range(effectrange, get_turf(holder)))
 		var/weakness = GetAnomalySusceptibility(H)
-		H.apply_damage(damage * weakness, BRUTE, damage_flags = DAM_DISPERSED)
-		H.apply_damage(damage * weakness, BURN, damage_flags = DAM_DISPERSED)
+		H.apply_damage(damage * weakness, DAMAGE_BRUTE, damage_flags = DAMAGE_FLAG_DISPERSED)
+		H.apply_damage(damage * weakness, DAMAGE_BURN, damage_flags = DAMAGE_FLAG_DISPERSED)
 		if (send_message)
 			if (weakness == 0)
 				to_chat(H, SPAN_WARNING("Some unseen force tries to tear into your suit, but fails!"))
@@ -126,6 +126,6 @@
 			to_chat(M, SPAN_DANGER(FONT_LARGE("Agonized screams fill your ears as the world around you briefly burns in hellfire!")))
 			if (istype(M, /mob/living/carbon/human))
 				var/mob/living/carbon/human/H = M
-				H.apply_damage((damage / 4), BRUTE, damage_flags = DAM_DISPERSED)
+				H.apply_damage((damage / 4), DAMAGE_BRUTE, damage_flags = DAMAGE_FLAG_DISPERSED)
 
 	new /obj/effect/gateway/artifact/big(get_turf(holder))

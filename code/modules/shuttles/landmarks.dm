@@ -62,10 +62,10 @@
 			map_destination.add_landmark(src, shuttle_restricted)
 
 //Called when the landmark is added to an overmap sector.
-/obj/effect/shuttle_landmark/proc/sector_set(var/obj/effect/overmap/visitable/O, shuttle_name)
+/obj/effect/shuttle_landmark/proc/sector_set(obj/effect/overmap/visitable/O, shuttle_name)
 	shuttle_restricted = shuttle_name
 
-/obj/effect/shuttle_landmark/proc/is_valid(var/datum/shuttle/shuttle)
+/obj/effect/shuttle_landmark/proc/is_valid(datum/shuttle/shuttle)
 	if(shuttle.current_location == src)
 		return FALSE
 	for(var/area/A in shuttle.shuttle_area)
@@ -104,7 +104,7 @@
 	landmark_tag += "-[x]-[y]-[z]-[random_id("landmarks",1,9999)]"
 	return ..()
 
-/obj/effect/shuttle_landmark/automatic/sector_set(var/obj/effect/overmap/visitable/O)
+/obj/effect/shuttle_landmark/automatic/sector_set(obj/effect/overmap/visitable/O)
 	..()
 	SetName("[O.name] - [initial(name)] ([x],[y])")
 
@@ -179,7 +179,7 @@
 			SPAN_ITALIC("You hear the clicking of metal and plastic.")
 		)
 		playsound(src, 'sound/items/shuttle_beacon_prepare.ogg', 100)
-		if (!do_after(user, 3 SECONDS, src, DO_DEFAULT | DO_USER_UNIQUE_ACT))
+		if (!do_after(user, 3 SECONDS, src, DO_PUBLIC_UNIQUE))
 			return FALSE
 		playsound(src, 'sound/items/shuttle_beacon_complete.ogg', 100)
 	active = TRUE
@@ -195,13 +195,16 @@
  *
  * Returns boolean - FALSE if the flare was not deactivated, TRUE if it was.
  */
-/obj/item/device/spaceflare/proc/deactivate(silent = FALSE)
+/obj/item/device/spaceflare/proc/deactivate(silent = FALSE, keep_landmark = FALSE)
 	if (!active)
 		return FALSE
 
 	active = FALSE
 	anchored = FALSE
-	QDEL_NULL(landmark)
+	if (keep_landmark)
+		landmark = null
+	else
+		QDEL_NULL(landmark)
 	update_icon()
 	if (!silent)
 		visible_message(SPAN_WARNING("\The [src] deactivates, going dark."))
@@ -227,6 +230,13 @@
 /obj/item/device/spaceflare/Destroy()
 	deactivate(TRUE)
 	. = ..()
+
+
+/obj/item/device/spaceflare/shuttle_land_on()
+	if (active)
+		// If a shuttle landed here we don't want to destroy the landmark, that breaks things. It becomes a permanent beacon smushed into the ground instead.
+		landmark.desync_flare()
+	..()
 
 
 /obj/effect/shuttle_landmark/automatic/spaceflare
@@ -268,3 +278,11 @@
 	forceMove(new_loc)
 	SetName("[initial(name)] ([x],[y])")
 	log_debug(append_admin_tools("\A [src]'s beacon was moved to [get_area(new_loc)].", location = get_turf(src)))
+
+
+/// Desynchronizes the effect from the beacon, rendering it a permanent landmark.
+/obj/effect/shuttle_landmark/automatic/spaceflare/proc/desync_flare()
+	GLOB.moved_event.unregister(beacon, src, /obj/effect/shuttle_landmark/automatic/spaceflare/proc/update_beacon_moved)
+	if (beacon?.active)
+		beacon.deactivate(TRUE, TRUE)
+	beacon = null

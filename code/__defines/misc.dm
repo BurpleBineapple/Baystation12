@@ -62,7 +62,7 @@
 #define MAX_BOOK_MESSAGE_LEN  18432
 #define MAX_LNAME_LEN         64
 #define MAX_NAME_LEN          26
-#define MAX_DESC_LEN          128
+#define MAX_DESC_LEN          256
 #define MAX_TEXTFILE_LENGTH 128000		// 512GQ file
 
 // Event defines.
@@ -202,8 +202,6 @@
 
 #define DEFAULT_SPAWNPOINT_ID "Default"
 
-#define MIDNIGHT_ROLLOVER		864000	//number of deciseconds in a day
-
 //Virus badness defines
 #define VIRUS_MILD			1
 #define VIRUS_COMMON		2	//Random events don't go higher (mutations aside)
@@ -296,3 +294,14 @@
 #define SOULSTONE_OWNER_CULT   "cult"   /// The soulstone is owned by the cult faction.
 #define SOULSTONE_OWNER_WIZARD "wizard" /// The soulstone is owned by a wizard.
 #define SOULSTONE_OWNER_PURE   "pure"   /// The soulstone has been purified.
+
+
+// Severities for emp_act()
+#define EMP_ACT_HEAVY 1
+#define EMP_ACT_LIGHT 2
+
+
+// Severities for ex_act()
+#define EX_ACT_DEVASTATING 1 // Within devastation range - Destructive/deadly, unlikely to survive.
+#define EX_ACT_HEAVY 2 // Within heavy range - Heavy damage, very dangerous
+#define EX_ACT_LIGHT 3 // Within light range - Minor damage.

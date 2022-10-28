@@ -28,7 +28,7 @@
 
 // pipe is deleted
 // ensure if holder is present, it is expelled
-obj/structure/disposalpipe/Destroy()
+/obj/structure/disposalpipe/Destroy()
 	var/obj/structure/disposalholder/H = locate() in src
 	if(H)
 		// holder was present
@@ -55,13 +55,13 @@ obj/structure/disposalpipe/Destroy()
 
 	// returns the direction of the next pipe object, given the entrance dir
 	// by default, returns the bitmask of remaining directions
-/obj/structure/disposalpipe/proc/nextdir(var/fromdir)
+/obj/structure/disposalpipe/proc/nextdir(fromdir)
 	return dpdir & (~turn(fromdir, 180))
 
 	// transfer the holder through this pipe segment
 	// overriden for special behaviour
 	//
-/obj/structure/disposalpipe/proc/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/proc/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir)
 	H.set_dir(nextdir)
 	var/turf/T = H.nextloc()
@@ -88,13 +88,13 @@ obj/structure/disposalpipe/Destroy()
 
 	// hide called by levelupdate if turf intact status changes
 	// change visibility status and force update of icon
-/obj/structure/disposalpipe/hide(var/intact)
+/obj/structure/disposalpipe/hide(intact)
 	set_invisibility(intact ? 101: 0)	// hide if floor is intact
 	update_icon()
 
 // expel the held objects into a turf
 // called when there is a break in the pipe
-/obj/structure/disposalpipe/proc/expel(var/obj/structure/disposalholder/H, var/turf/T, var/direction)
+/obj/structure/disposalpipe/proc/expel(obj/structure/disposalholder/H, turf/T, direction)
 	if(!istype(H))
 		return
 
@@ -164,7 +164,7 @@ obj/structure/disposalpipe/Destroy()
 // will expel any holder inside at the time
 // then delete the pipe
 // remains : set to leave broken pipe pieces in place
-/obj/structure/disposalpipe/proc/broken(var/remains = 0)
+/obj/structure/disposalpipe/proc/broken(remains = 0)
 	if(remains)
 		for(var/D in GLOB.cardinal)
 			if(D & dpdir)
@@ -194,9 +194,8 @@ obj/structure/disposalpipe/Destroy()
 	spawn(2)	// delete pipe after 2 ticks to ensure expel proc finished
 		qdel(src)
 
-/obj/structure/disposalpipe/handle_death_change(new_death_state)
-	if (new_death_state)
-		broken(prob(0.5))
+/obj/structure/disposalpipe/on_death()
+	broken(prob(0.5))
 
 //attack by item
 //weldingtool: unfasten and convert to obj/disposalconstruct
@@ -301,7 +300,7 @@ obj/structure/disposalpipe/Destroy()
 	update()
 	return
 
-/obj/structure/disposalpipe/up/nextdir(var/fromdir)
+/obj/structure/disposalpipe/up/nextdir(fromdir)
 	var/nextdir
 	if(fromdir == 11)
 		nextdir = dir
@@ -309,7 +308,7 @@ obj/structure/disposalpipe/Destroy()
 		nextdir = 12
 	return nextdir
 
-/obj/structure/disposalpipe/up/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/up/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir)
 	H.set_dir(nextdir)
 
@@ -351,7 +350,7 @@ obj/structure/disposalpipe/Destroy()
 	update()
 	return
 
-/obj/structure/disposalpipe/down/nextdir(var/fromdir)
+/obj/structure/disposalpipe/down/nextdir(fromdir)
 	var/nextdir
 	if(fromdir == 12)
 		nextdir = dir
@@ -359,7 +358,7 @@ obj/structure/disposalpipe/Destroy()
 		nextdir = 11
 	return nextdir
 
-/obj/structure/disposalpipe/down/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/down/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir)
 	H.dir = nextdir
 
@@ -425,7 +424,7 @@ obj/structure/disposalpipe/Destroy()
 	// if coming in from secondary dirs, then next is primary dir
 	// if coming in from primary dir, then next is equal chance of other dirs
 
-/obj/structure/disposalpipe/junction/nextdir(var/fromdir)
+/obj/structure/disposalpipe/junction/nextdir(fromdir)
 	var/flipdir = turn(fromdir, 180)
 	if(flipdir != dir)	// came from secondary dir
 		return dir		// so exit through primary
@@ -475,7 +474,7 @@ obj/structure/disposalpipe/Destroy()
 	updatedesc()
 	update()
 
-/obj/structure/disposalpipe/tagger/attackby(var/obj/item/I, var/mob/user)
+/obj/structure/disposalpipe/tagger/attackby(obj/item/I, mob/user)
 	if(..())
 		return
 
@@ -485,11 +484,11 @@ obj/structure/disposalpipe/Destroy()
 		if(O.currTag)// Tag set
 			sort_tag = O.currTag
 			playsound(src.loc, 'sound/machines/twobeep.ogg', 100, 1)
-			to_chat(user, "<span class='notice'>Changed tag to '[sort_tag]'.</span>")
+			to_chat(user, SPAN_NOTICE("Changed tag to '[sort_tag]'."))
 			updatename()
 			updatedesc()
 
-/obj/structure/disposalpipe/tagger/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/tagger/transfer(obj/structure/disposalholder/H)
 	if(sort_tag)
 		if(partial)
 			H.setpartialtag(sort_tag)
@@ -550,7 +549,7 @@ obj/structure/disposalpipe/Destroy()
 	linked = null
 	return ..()
 
-/obj/structure/disposalpipe/diversion_junction/attackby(var/obj/item/I, var/mob/user)
+/obj/structure/disposalpipe/diversion_junction/attackby(obj/item/I, mob/user)
 	if(..())
 		return 1
 
@@ -559,10 +558,10 @@ obj/structure/disposalpipe/Destroy()
 		if(C.id_tag)
 			id_tag = C.id_tag
 			playsound(src.loc, 'sound/machines/twobeep.ogg', 100, 1)
-			user.visible_message("<span class='notice'>\The [user] changes \the [src]'s tag.</span>")
+			user.visible_message(SPAN_NOTICE("\The [user] changes \the [src]'s tag."))
 
 
-/obj/structure/disposalpipe/diversion_junction/nextdir(var/fromdir, var/sortTag)
+/obj/structure/disposalpipe/diversion_junction/nextdir(fromdir, sortTag)
 	if(fromdir != sortdir)
 		if(active)
 			return sortdir
@@ -571,7 +570,7 @@ obj/structure/disposalpipe/Destroy()
 	else
 		return inactive_dir
 
-/obj/structure/disposalpipe/diversion_junction/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/diversion_junction/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir, H.destinationTag)
 	H.set_dir(nextdir)
 	var/turf/T = H.nextloc()
@@ -643,7 +642,7 @@ obj/structure/disposalpipe/Destroy()
 	updatedesc()
 	updatename()
 
-/obj/structure/disposalpipe/sortjunction/attackby(var/obj/item/I, var/mob/user)
+/obj/structure/disposalpipe/sortjunction/attackby(obj/item/I, mob/user)
 	if(..())
 		return
 
@@ -653,11 +652,11 @@ obj/structure/disposalpipe/Destroy()
 		if(O.currTag)// Tag set
 			sort_type = O.currTag
 			playsound(src.loc, 'sound/machines/twobeep.ogg', 100, 1)
-			to_chat(user, "<span class='notice'>Changed filter to '[sort_type]'.</span>")
+			to_chat(user, SPAN_NOTICE("Changed filter to '[sort_type]'."))
 			updatename()
 			updatedesc()
 
-/obj/structure/disposalpipe/sortjunction/proc/divert_check(var/checkTag)
+/obj/structure/disposalpipe/sortjunction/proc/divert_check(checkTag)
 	return sort_type == checkTag
 
 	// next direction to move
@@ -665,7 +664,7 @@ obj/structure/disposalpipe/Destroy()
 	// if coming in from posdir, then flip around and go back to posdir
 	// if coming in from sortdir, go to posdir
 
-/obj/structure/disposalpipe/sortjunction/nextdir(var/fromdir, var/sortTag)
+/obj/structure/disposalpipe/sortjunction/nextdir(fromdir, sortTag)
 	if(fromdir != sortdir)	// probably came from the negdir
 		if(divert_check(sortTag))
 			return sortdir
@@ -675,7 +674,7 @@ obj/structure/disposalpipe/Destroy()
 						// so go with the flow to positive direction
 		return posdir
 
-/obj/structure/disposalpipe/sortjunction/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/sortjunction/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir, H.destinationTag)
 	H.set_dir(nextdir)
 	var/turf/T = H.nextloc()
@@ -700,7 +699,7 @@ obj/structure/disposalpipe/Destroy()
 	desc = "An underfloor disposal pipe which filters all wrapped and tagged items."
 	flipped_state = /obj/structure/disposalpipe/sortjunction/wildcard/flipped
 
-/obj/structure/disposalpipe/sortjunction/wildcard/divert_check(var/checkTag)
+/obj/structure/disposalpipe/sortjunction/wildcard/divert_check(checkTag)
 	return checkTag != ""
 
 //junction that filters all untagged items
@@ -709,7 +708,7 @@ obj/structure/disposalpipe/Destroy()
 	desc = "An underfloor disposal pipe which filters all untagged items."
 	flipped_state = /obj/structure/disposalpipe/sortjunction/untagged/flipped
 
-/obj/structure/disposalpipe/sortjunction/untagged/divert_check(var/checkTag)
+/obj/structure/disposalpipe/sortjunction/untagged/divert_check(checkTag)
 	return checkTag == ""
 
 /obj/structure/disposalpipe/sortjunction/flipped //for easier and cleaner mapping
@@ -757,7 +756,7 @@ obj/structure/disposalpipe/Destroy()
 	return
 
 	// Override attackby so we disallow trunkremoval when somethings ontop
-/obj/structure/disposalpipe/trunk/attackby(var/obj/item/I, var/mob/user)
+/obj/structure/disposalpipe/trunk/attackby(obj/item/I, mob/user)
 
 	//Disposal constructors
 	var/obj/structure/disposalconstruct/C = locate() in src.loc
@@ -794,7 +793,7 @@ obj/structure/disposalpipe/Destroy()
 	// if not entering from disposal bin,
 	// transfer to linked object (outlet or bin)
 
-/obj/structure/disposalpipe/trunk/transfer(var/obj/structure/disposalholder/H)
+/obj/structure/disposalpipe/trunk/transfer(obj/structure/disposalholder/H)
 
 	if(H.dir == DOWN)		// we just entered from a disposer
 		return ..()		// so do base transfer proc
@@ -814,7 +813,7 @@ obj/structure/disposalpipe/Destroy()
 
 	// nextdir
 
-/obj/structure/disposalpipe/trunk/nextdir(var/fromdir)
+/obj/structure/disposalpipe/trunk/nextdir(fromdir)
 	if(fromdir == DOWN)
 		return dir
 	else

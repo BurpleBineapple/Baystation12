@@ -13,7 +13,7 @@
 	create_reagents(reagent_amount)
 	..()
 
-/obj/item/projectile/bullet/chemdart/on_hit(var/atom/target, var/blocked = 0, var/def_zone = null)
+/obj/item/projectile/bullet/chemdart/on_hit(atom/target, blocked = 0, def_zone = null)
 	if(blocked < 100 && isliving(target))
 		var/mob/living/L = target
 		if(L.can_inject(null, def_zone) == CAN_INJECT)
@@ -98,11 +98,11 @@
 /obj/item/gun/projectile/dartgun/examine(mob/user)
 	. = ..()
 	if (beakers.len)
-		to_chat(user, "<span class='notice'>\The [src] contains:</span>")
+		to_chat(user, SPAN_NOTICE("\The [src] contains:"))
 		for(var/obj/item/reagent_containers/glass/beaker/B in beakers)
 			if(B.reagents && B.reagents.reagent_list.len)
 				for(var/datum/reagent/R in B.reagents.reagent_list)
-					to_chat(user, "<span class='notice'>[R.volume] units of [R.name]</span>")
+					to_chat(user, SPAN_NOTICE("[R.volume] units of [R.name]"))
 
 /obj/item/gun/projectile/dartgun/attackby(obj/item/I as obj, mob/user as mob)
 	if(istype(I, /obj/item/reagent_containers/glass))
@@ -110,26 +110,26 @@
 		return 1
 	..()
 
-/obj/item/gun/projectile/dartgun/proc/add_beaker(var/obj/item/reagent_containers/glass/B, mob/user)
+/obj/item/gun/projectile/dartgun/proc/add_beaker(obj/item/reagent_containers/glass/B, mob/user)
 	if(!istype(B, container_type))
-		to_chat(user, "<span class='warning'>[B] doesn't seem to fit into [src].</span>")
+		to_chat(user, SPAN_WARNING("[B] doesn't seem to fit into [src]."))
 		return
 	if(beakers.len >= max_beakers)
-		to_chat(user, "<span class='warning'>[src] already has [max_beakers] beakers in it - another one isn't going to fit!</span>")
+		to_chat(user, SPAN_WARNING("[src] already has [max_beakers] beakers in it - another one isn't going to fit!"))
 		return
 	if(!user.unEquip(B, src))
 		return
 	beakers |= B
-	user.visible_message("\The [user] inserts \a [B] into [src].", "<span class='notice'>You slot [B] into [src].</span>")
+	user.visible_message("\The [user] inserts \a [B] into [src].", SPAN_NOTICE("You slot [B] into [src]."))
 
-/obj/item/gun/projectile/dartgun/proc/remove_beaker(var/obj/item/reagent_containers/glass/B, mob/user)
+/obj/item/gun/projectile/dartgun/proc/remove_beaker(obj/item/reagent_containers/glass/B, mob/user)
 	mixing -= B
 	beakers -= B
 	user.put_in_hands(B)
-	user.visible_message("\The [user] removes \a [B] from [src].", "<span class='notice'>You remove [B] from [src].</span>")
+	user.visible_message("\The [user] removes \a [B] from [src].", SPAN_NOTICE("You remove [B] from [src]."))
 
 //fills the given dart with reagents
-/obj/item/gun/projectile/dartgun/proc/fill_dart(var/obj/item/projectile/bullet/chemdart/dart)
+/obj/item/gun/projectile/dartgun/proc/fill_dart(obj/item/projectile/bullet/chemdart/dart)
 	if(mixing.len)
 		var/mix_amount = dart.reagent_amount/mixing.len
 		for(var/obj/item/reagent_containers/glass/beaker/B in mixing)
@@ -154,9 +154,9 @@
 				for(var/datum/reagent/R in B.reagents.reagent_list)
 					dat += "<br>    [R.volume] units of [R.name], "
 				if(B in mixing)
-					dat += "<A href='?src=\ref[src];stop_mix=[i]'><font color='green'>Mixing</font></A> "
+					dat += "<A href='?src=\ref[src];stop_mix=[i]'>[SPAN_COLOR("green", "Mixing")]</A> "
 				else
-					dat += "<A href='?src=\ref[src];mix=[i]'><font color='red'>Not mixing</font></A> "
+					dat += "<A href='?src=\ref[src];mix=[i]'>[SPAN_COLOR("red", "Not mixing")]</A> "
 			else
 				dat += "nothing."
 			dat += " \[<A href='?src=\ref[src];eject=[i]'>Eject</A>\]<br>"
@@ -165,7 +165,7 @@
 		if(ammo_magazine.stored_ammo && ammo_magazine.stored_ammo.len)
 			dat += "The dart cartridge has [ammo_magazine.stored_ammo.len] shots remaining."
 		else
-			dat += "<font color='red'>The dart cartridge is empty!</font>"
+			dat += SPAN_COLOR("red", "The dart cartridge is empty!")
 		dat += " \[<A href='?src=\ref[src];eject_cart=1'>Eject</A>\]<br>"
 
 	dat += "<br>\[<A href='?src=\ref[src];refresh=1'>Refresh</A>\]"
@@ -202,4 +202,4 @@
 	starting_chems = list(/datum/reagent/kelotane,/datum/reagent/bicaridine,/datum/reagent/dylovene)
 
 /obj/item/gun/projectile/dartgun/vox/raider
-	starting_chems = list(/datum/reagent/space_drugs,/datum/reagent/soporific,/datum/reagent/impedrezene)
+	starting_chems = list(/datum/reagent/drugs/hextro,/datum/reagent/soporific,/datum/reagent/impedrezene)

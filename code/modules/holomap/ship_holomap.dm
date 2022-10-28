@@ -13,7 +13,7 @@
 
 	uncreated_component_parts = null
 
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	base_type = /obj/machinery/ship_map
 
 	var/light_power_on = 1
@@ -78,7 +78,7 @@
 
 	update_icon()
 
-/obj/machinery/ship_map/attack_hand(var/mob/user)
+/obj/machinery/ship_map/attack_hand(mob/user)
 	if(watching_mob && (watching_mob != user))
 		to_chat(user, SPAN_WARNING("Someone else is currently watching the holomap."))
 		return
@@ -88,7 +88,7 @@
 	startWatching(user)
 
 // Let people bump up against it to watch
-/obj/machinery/ship_map/Bumped(var/atom/movable/AM)
+/obj/machinery/ship_map/Bumped(atom/movable/AM)
 	if(!watching_mob && isliving(AM) && AM.loc == loc)
 		startWatching(AM)
 
@@ -101,8 +101,8 @@
 	else
 		return TRUE
 
-/obj/machinery/ship_map/proc/startWatching(var/mob/user)
-	if(isliving(user) && anchored && !(stat & (NOPOWER|BROKEN)))
+/obj/machinery/ship_map/proc/startWatching(mob/user)
+	if(isliving(user) && anchored && operable())
 		if(user.client)
 			holomap_datum.station_map.loc = GLOB.global_hud.holomap  // Put the image on the holomap hud
 			holomap_datum.station_map.alpha = 0 // Set to transparent so we can fade in
@@ -124,7 +124,7 @@
 			START_PROCESSING_MACHINE(src, MACHINERY_PROCESS_SELF)
 
 /obj/machinery/ship_map/Process()
-	if((stat & (NOPOWER|BROKEN)))
+	if((inoperable()))
 		stopWatching()
 		return PROCESS_KILL
 
@@ -152,10 +152,10 @@
 /obj/machinery/ship_map/on_update_icon()
 	. = ..()
 	overlays.Cut()
-	if(stat & BROKEN)
+	if(MACHINE_IS_BROKEN(src))
 		icon_state = "station_mapb"
 		set_light(0)
-	else if((stat & NOPOWER) || !anchored)
+	else if((!is_powered()) || !anchored)
 		icon_state = "station_map0"
 		set_light(0)
 	else
@@ -177,14 +177,14 @@
 
 /obj/machinery/ship_map/ex_act(severity)
 	switch(severity)
-		if(1)
+		if(EX_ACT_DEVASTATING)
 			qdel(src)
-		if(2)
+		if(EX_ACT_HEAVY)
 			if (prob(50))
 				qdel(src)
 			else
 				set_broken()
-		if(3)
+		if(EX_ACT_LIGHT)
 			if (prob(25))
 				set_broken()
 

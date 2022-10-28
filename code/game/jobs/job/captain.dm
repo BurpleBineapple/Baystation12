@@ -1,4 +1,4 @@
-var/datum/announcement/minor/captain_announcement = new(do_newscast = 1)
+var/global/datum/announcement/minor/captain_announcement = new(do_newscast = 1)
 
 /datum/job/captain
 	title = "Captain"
@@ -16,9 +16,9 @@ var/datum/announcement/minor/captain_announcement = new(do_newscast = 1)
 	economic_power = 20
 
 	ideal_character_age = 70 // Old geezer captains ftw
-	outfit_type = /decl/hierarchy/outfit/job/captain
+	outfit_type = /singleton/hierarchy/outfit/job/captain
 
-/datum/job/captain/equip(var/mob/living/carbon/human/H)
+/datum/job/captain/equip(mob/living/carbon/human/H)
 	. = ..()
 	if(.)
 		H.implant_loyalty(src)
@@ -44,5 +44,5 @@ var/datum/announcement/minor/captain_announcement = new(do_newscast = 1)
 			            access_all_personal_lockers, access_maint_tunnels, access_janitor, access_construction, access_morgue,
 			            access_crematorium, access_kitchen, access_cargo, access_cargo_bot, access_mailsorting, access_qm, access_hydroponics, access_lawyer,
 			            access_chapel_office, access_library, access_research, access_mining, access_heads_vault, access_mining_station,
-			            access_hop, access_RC_announce, access_keycard_auth, access_gateway)
-	outfit_type = /decl/hierarchy/outfit/job/hop
+			            access_hop, access_RC_announce, access_keycard_auth, access_gateway, access_research_storage)
+	outfit_type = /singleton/hierarchy/outfit/job/hop

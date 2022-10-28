@@ -29,7 +29,7 @@
 		atmosphere.temperature = min(T20C + rand(20, 100), limit)
 		atmosphere.update_values()
 
-/obj/effect/overmap/visitable/sector/exoplanet/desert/adapt_seed(var/datum/seed/S)
+/obj/effect/overmap/visitable/sector/exoplanet/desert/adapt_seed(datum/seed/S)
 	..()
 	if(prob(90))
 		S.set_trait(TRAIT_REQUIRES_WATER,0)
@@ -50,7 +50,7 @@
 	flora_prob = 5
 	large_flora_prob = 0
 
-/datum/random_map/noise/exoplanet/desert/get_additional_spawns(var/value, var/turf/T)
+/datum/random_map/noise/exoplanet/desert/get_additional_spawns(value, turf/T)
 	..()
 	var/v = noise2value(value)
 	if(v > 6 && prob(2))
@@ -82,7 +82,7 @@
 		if(busy)
 			to_chat(user, SPAN_NOTICE("\The [buckled_mob] is already getting out, be patient."))
 			return
-		var/delay = 60
+		var/delay = 6 SECONDS
 		if(user == buckled_mob)
 			delay *=2
 			user.visible_message(
@@ -97,7 +97,7 @@
 				SPAN_NOTICE("You hear water sloshing.")
 				)
 		busy = TRUE
-		if(do_after(user, delay, src))
+		if(do_after(user, delay, src, DO_PUBLIC_UNIQUE))
 			busy = FALSE
 			if(user == buckled_mob)
 				if(prob(80))
@@ -116,7 +116,7 @@
 	..()
 	update_icon()
 
-/obj/effect/quicksand/buckle_mob(var/mob/L)
+/obj/effect/quicksand/buckle_mob(mob/L)
 	..()
 	update_icon()
 
@@ -144,7 +144,7 @@
 	else
 		..()
 
-/obj/effect/quicksand/Crossed(var/atom/movable/AM)
+/obj/effect/quicksand/Crossed(atom/movable/AM)
 	if(isliving(AM))
 		var/mob/living/L = AM
 		if(L.throwing || L.can_overcome_gravity())

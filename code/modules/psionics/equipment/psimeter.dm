@@ -12,16 +12,16 @@
 	var/mob/living/last_assayed
 
 /obj/machinery/psi_meter/on_update_icon()
-	if(use_power && !(stat & (NOPOWER|BROKEN)))
+	if(use_power && operable())
 		icon_state = "meter_on"
 	else
 		icon_state = "meter_off"
 
-/obj/machinery/psi_meter/interface_interact(var/mob/user)
+/obj/machinery/psi_meter/interface_interact(mob/user)
 	interact(user)
 	return TRUE
 
-/obj/machinery/psi_meter/interact(var/mob/user)
+/obj/machinery/psi_meter/interact(mob/user)
 
 	if(!use_power) return
 

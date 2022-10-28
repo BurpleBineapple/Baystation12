@@ -17,12 +17,12 @@
 		if(!body.MouseDrop(over_object))
 			return ..()
 
-/mob/living/exosuit/RelayMouseDrag(src_object, over_object, src_location, over_location, src_control, over_control, params, var/mob/user)
+/mob/living/exosuit/RelayMouseDrag(src_object, over_object, src_location, over_location, src_control, over_control, params, mob/user)
 	if(user && (user in pilots) && user.loc == src)
 		return OnMouseDrag(src_object, over_object, src_location, over_location, src_control, over_control, params, user)
 	return ..()
 
-/mob/living/exosuit/OnMouseDrag(src_object, over_object, src_location, over_location, src_control, over_control, params, var/mob/user)
+/mob/living/exosuit/OnMouseDrag(src_object, over_object, src_location, over_location, src_control, over_control, params, mob/user)
 	if(!user || incapacitated() || user.incapacitated())
 		return FALSE
 
@@ -33,7 +33,7 @@
 	if(selected_system)
 		return selected_system.MouseDragInteraction(src_object, over_object, src_location, over_location, src_control, over_control, params, user)
 
-/datum/click_handler/default/mech/OnClick(var/atom/A, var/params)
+/datum/click_handler/default/mech/OnClick(atom/A, params)
 	var/mob/living/exosuit/E = user.loc
 	if(!istype(E))
 		//If this happens something broke tbh
@@ -43,7 +43,7 @@
 		return E.ClickOn(A, params, user)
 	else return ..()
 
-/datum/click_handler/default/mech/OnDblClick(var/atom/A, var/params)
+/datum/click_handler/default/mech/OnDblClick(atom/A, params)
 	OnClick(A, params)
 
 /mob/living/exosuit/allow_click_through(atom/A, params, mob/user)
@@ -58,7 +58,7 @@
 		return max(shared_living_nano_distance(src_object), .) //Either visible to mech(outside) or visible to user (inside)
 
 
-/mob/living/exosuit/ClickOn(var/atom/A, var/params, var/mob/user)
+/mob/living/exosuit/ClickOn(atom/A, params, mob/user)
 
 	if(!user || incapacitated() || user.incapacitated())
 		return
@@ -189,7 +189,7 @@
 		return A.attack_generic(src, arms.melee_damage, "attacked")
 	return
 
-/mob/living/exosuit/proc/set_hardpoint(var/hardpoint_tag)
+/mob/living/exosuit/proc/set_hardpoint(hardpoint_tag)
 	clear_selected_hardpoint()
 	if(hardpoints[hardpoint_tag])
 		// Set the new system.
@@ -213,6 +213,10 @@
 
 /mob/living/exosuit/proc/check_enter(mob/user, silent = FALSE, check_incap = TRUE)
 	if(!user || (check_incap && user.incapacitated()))
+		return FALSE
+	if (user.buckled)
+		if (!silent)
+			to_chat(user, SPAN_WARNING("You are currently buckled to \the [user.buckled]."))
 		return FALSE
 	if(!(user.mob_size >= body.min_pilot_size && user.mob_size <= body.max_pilot_size))
 		if(!silent)
@@ -240,7 +244,7 @@
 	to_chat(user, SPAN_NOTICE("You start climbing into \the [src]..."))
 	if(!body)
 		return FALSE
-	if(!instant && !do_after(user, body.climb_time))
+	if(!instant && !do_after(user, body.climb_time, src, DO_PUBLIC_UNIQUE))
 		return FALSE
 	if(!check_enter(user, silent, check_incap))
 		return FALSE
@@ -263,7 +267,7 @@
 			access_card.access |= pilot.GetAccess()
 			to_chat(pilot, SPAN_NOTICE("Security access permissions synchronized."))
 
-/mob/living/exosuit/proc/eject(var/mob/user, var/silent)
+/mob/living/exosuit/proc/eject(mob/user, silent)
 	if(!user || !(user in src.contents))
 		return
 	if(hatch_closed)
@@ -291,7 +295,7 @@
 		update_pilots()
 	return 1
 
-/mob/living/exosuit/attackby(var/obj/item/thing, var/mob/user)
+/mob/living/exosuit/attackby(obj/item/thing, mob/user)
 
 	if(user.a_intent != I_HURT && istype(thing, /obj/item/mech_equipment))
 		if(hardpoints_locked)
@@ -351,8 +355,8 @@
 					return
 
 				visible_message(SPAN_WARNING("\The [user] begins unwrenching the securing bolts holding \the [src] together."))
-				var/delay = 60 * user.skill_delay_mult(SKILL_DEVICES)
-				if(!do_after(user, delay) || !maintenance_protocols)
+				var/delay = 6 SECONDS * user.skill_delay_mult(SKILL_DEVICES)
+				if(!do_after(user, delay, src, DO_PUBLIC_UNIQUE) || !maintenance_protocols)
 					return
 				visible_message(SPAN_NOTICE("\The [user] loosens and removes the securing bolts, dismantling \the [src]."))
 				dismantle()
@@ -386,8 +390,8 @@
 				if(!body || !body.cell)
 					to_chat(user, SPAN_WARNING("There is no cell here for you to remove!"))
 					return
-				var/delay = 20 * user.skill_delay_mult(SKILL_DEVICES)
-				if(!do_after(user, delay) || !maintenance_protocols || !body || !body.cell)
+				var/delay = 2 SECONDS * user.skill_delay_mult(SKILL_DEVICES)
+				if(!do_after(user, delay, src, DO_PUBLIC_UNIQUE) || !maintenance_protocols || !body || !body.cell)
 					return
 
 				user.put_in_hands(body.cell)
@@ -406,7 +410,7 @@
 					return
 				var/delay = min(50 * user.skill_delay_mult(SKILL_DEVICES), 50 * user.skill_delay_mult(SKILL_EVA))
 				visible_message(SPAN_NOTICE("\The [user] starts forcing the \the [src]'s emergency [body.hatch_descriptor] release using \the [thing]."))
-				if(!do_after(user, delay, src, DO_DEFAULT | DO_PUBLIC_PROGRESS))
+				if(!do_after(user, delay, src, DO_PUBLIC_UNIQUE))
 					return
 				visible_message(SPAN_NOTICE("\The [user] forces \the [src]'s [body.hatch_descriptor] open using the \the [thing]."))
 				playsound(user.loc, 'sound/machines/bolts_up.ogg', 25, 1)
@@ -440,7 +444,7 @@
 				return
 	return ..()
 
-/mob/living/exosuit/attack_hand(var/mob/user)
+/mob/living/exosuit/attack_hand(mob/user)
 	// Drag the pilot out if possible.
 	if(user.a_intent == I_HURT)
 		if(!LAZYLEN(pilots))
@@ -448,7 +452,7 @@
 		else if(!hatch_closed)
 			var/mob/pilot = pick(pilots)
 			user.visible_message(SPAN_DANGER("\The [user] is trying to pull \the [pilot] out of \the [src]!"))
-			if(do_after(user, 30) && user.Adjacent(src) && (pilot in pilots) && !hatch_closed)
+			if(do_after(user, 3 SECONDS, src, DO_PUBLIC_UNIQUE) && user.Adjacent(src) && (pilot in pilots) && !hatch_closed)
 				user.visible_message(SPAN_DANGER("\The [user] drags \the [pilot] out of \the [src]!"))
 				eject(pilot, silent=1)
 		else if(hatch_closed)
@@ -462,15 +466,14 @@
 		hud_open.toggled()
 	return
 
-/mob/living/exosuit/attack_generic(var/mob/user, var/damage, var/attack_message = "smashes into")
+/mob/living/exosuit/attack_generic(mob/user, damage, attack_message = "smashes into")
 	if(..())
-		playsound(loc, 'sound/effects/metal_close.ogg', 40, 1)
-		playsound(loc, 'sound/weapons/tablehit1.ogg', 40, 1)
+		playsound(loc, arms.mech_punch_sound, 40, 1)
 
-/mob/living/exosuit/proc/attack_self(var/mob/user)
+/mob/living/exosuit/proc/attack_self(mob/user)
 	return visible_message("\The [src] pokes itself.")
 
-/mob/living/exosuit/proc/rename(var/mob/user)
+/mob/living/exosuit/proc/rename(mob/user)
 	if(user != src && !(user in pilots))
 		return
 	var/new_name = sanitize(input("Enter a new exosuit designation.", "Exosuit Name") as text|null, max_length = MAX_NAME_LEN)

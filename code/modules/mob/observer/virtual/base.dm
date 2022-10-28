@@ -1,4 +1,4 @@
-var/list/all_virtual_listeners = list()
+var/global/list/all_virtual_listeners = list()
 
 /mob/observer/virtual
 	icon = 'icons/mob/virtual.dmi'
@@ -17,7 +17,7 @@ var/list/all_virtual_listeners = list()
 
 	var/static/list/overlay_icons
 
-/mob/observer/virtual/New(var/location, var/atom/movable/host)
+/mob/observer/virtual/New(location, atom/movable/host)
 	..()
 	if(!istype(host, host_type))
 		CRASH("Received an unexpected host type. Expected [host_type], was [log_info_line(host)].")

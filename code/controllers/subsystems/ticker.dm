@@ -6,7 +6,7 @@ SUBSYSTEM_DEF(ticker)
 	flags = SS_NO_TICK_CHECK | SS_KEEP_TIMING
 	runlevels = RUNLEVEL_LOBBY | RUNLEVELS_DEFAULT
 
-	var/pregame_timeleft = 3 MINUTES
+	var/pregame_timeleft
 	var/start_ASAP = FALSE          //the game will start as soon as possible, bypassing all pre-game nonsense
 	var/list/gamemode_vote_results  //Will be a list, in order of preference, of form list(config_tag = number of votes).
 	var/bypass_gamemode_vote = 0    //Intended for use with admin tools. Will avoid voting and ignore any results.
@@ -32,12 +32,28 @@ SUBSYSTEM_DEF(ticker)
 	///Set to TRUE when an admin forcefully ends the round.
 	var/forced_end = FALSE
 
-/datum/controller/subsystem/ticker/Initialize()
-	to_world("<span class='info'><B>Welcome to the pre-game lobby!</B></span>")
-	to_world("Please, setup your character and select ready. Game will start in [round(pregame_timeleft/10)] seconds")
-	return ..()
+	var/static/list/mode_tags = list()
 
-/datum/controller/subsystem/ticker/fire(resumed = 0)
+	var/static/list/mode_names = list()
+
+	var/static/list/mode_cache = list()
+
+	var/static/list/mode_probabilities = list()
+
+	var/static/list/votable_modes = list()
+
+	/// True when the game is over.
+	var/static/game_over = FALSE
+
+
+/datum/controller/subsystem/ticker/Initialize(start_uptime)
+	pregame_timeleft = config.pre_game_time SECONDS
+	build_mode_cache()
+	to_world(SPAN_INFO("<B>Welcome to the pre-game lobby!</B>"))
+	to_world("Please, setup your character and select ready. Game will start in [round(pregame_timeleft/10)] seconds")
+
+
+/datum/controller/subsystem/ticker/fire(resumed, no_mc_tick)
 	switch(GAME_STATE)
 		if(RUNLEVEL_LOBBY)
 			pregame_tick()
@@ -47,6 +63,48 @@ SUBSYSTEM_DEF(ticker)
 			playing_tick()
 		if(RUNLEVEL_POSTGAME)
 			post_game_tick()
+
+
+/datum/controller/subsystem/ticker/proc/build_mode_cache()
+	mode_tags = list()
+	mode_names = list()
+	mode_cache = list()
+	mode_probabilities = list()
+	for (var/datum/game_mode/mode as anything in subtypesof(/datum/game_mode))
+		var/tag = initial(mode.config_tag)
+		if (!tag)
+			continue
+		mode_cache[tag] = (mode = new mode)
+		if (tag in mode_tags)
+			continue
+		mode_tags += tag
+		mode_names[tag] = mode.name
+		mode_probabilities[tag] = 0
+		if (mode.votable)
+			votable_modes += tag
+	votable_modes -= config.disallowed_modes
+	for (var/key in config.probabilities)
+		mode_probabilities[key] = config.probabilities[key]
+
+
+/datum/controller/subsystem/ticker/proc/get_runnable_modes()
+	var/list/lobby_players = lobby_players()
+	var/list/result = list()
+	for (var/tag in mode_cache)
+		var/datum/game_mode/mode = mode_cache[tag]
+		if (mode_probabilities[tag] > 0 && !mode.check_startable(lobby_players))
+			result[tag] = mode_probabilities[tag]
+	return result
+
+
+/datum/controller/subsystem/ticker/proc/pick_mode(mode_name)
+	if (!mode_name)
+		return
+	for (var/tag in SSticker.mode_cache)
+		var/datum/game_mode/M = SSticker.mode_cache[tag]
+		if (M.config_tag == mode_name)
+			return M
+
 
 /datum/controller/subsystem/ticker/proc/pregame_tick()
 	if(start_ASAP)
@@ -59,22 +117,39 @@ SUBSYSTEM_DEF(ticker)
 		return
 
 	if(!bypass_gamemode_vote && (pregame_timeleft <= config.vote_autogamemode_timeleft SECONDS) && !gamemode_vote_results)
+#ifndef UNIT_TEST
+		var/list/lobby = lobby_players()
+		if (!length(lobby))
+			pregame_timeleft = config.vote_period + 60 SECONDS
+			return
+#endif
 		if(!SSvote.active_vote)
 			SSvote.initiate_vote(/datum/vote/gamemode, automatic = 1)
 
 /datum/controller/subsystem/ticker/proc/setup_tick()
+#ifndef UNIT_TEST
+	if (!start_ASAP)
+		var/list/ready = ready_players()
+		if (!length(ready))
+			pregame_timeleft = config.vote_period + 30 SECONDS
+			gamemode_vote_results = null
+			Master.SetRunLevel(RUNLEVEL_LOBBY)
+			to_world("<b>No ready players.</b> Returning to pre-game lobby.")
+			return
+#endif
+
 	switch(choose_gamemode())
 		if(CHOOSE_GAMEMODE_SILENT_REDO)
 			log_debug("Silently re-rolling game mode...")
 			return
 		if(CHOOSE_GAMEMODE_RETRY)
-			pregame_timeleft = 60 SECONDS
+			pregame_timeleft = 30 SECONDS
 			Master.SetRunLevel(RUNLEVEL_LOBBY)
 			to_world("<B>Unable to choose playable game mode.</B> Reverting to pre-game lobby to try again.")
 			return
 		if(CHOOSE_GAMEMODE_REVOTE)
 			revotes_allowed--
-			pregame_timeleft = initial(pregame_timeleft)
+			pregame_timeleft = config.vote_period + 30 SECONDS
 			gamemode_vote_results = null
 			Master.SetRunLevel(RUNLEVEL_LOBBY)
 			to_world("<B>Unable to choose playable game mode.</B> Reverting to pre-game lobby for a revote.")
@@ -100,7 +175,7 @@ SUBSYSTEM_DEF(ticker)
 
 	spawn(0)//Forking here so we dont have to wait for this to finish
 		mode.post_setup() // Drafts antags who don't override jobs.
-		to_world("<span class='info'><B>Enjoy the game!</B></span>")
+		to_world(SPAN_INFO("<B>Enjoy the game!</B>"))
 		sound_to(world, sound(GLOB.using_map.welcome_sound))
 
 		for (var/mob/new_player/player in GLOB.player_list)
@@ -133,13 +208,13 @@ SUBSYSTEM_DEF(ticker)
 		if(END_GAME_READY_TO_END)
 			end_game_state = END_GAME_ENDING
 			callHook("roundend")
-			if (universe_has_ended)
+			if (game_over)
 				if(!delay_end)
-					to_world("<span class='notice'><b>Rebooting due to destruction of [station_name()] in [restart_timeout/10] seconds</b></span>")
+					to_world(SPAN_NOTICE("<b>Rebooting due to destruction of [station_name()] in [restart_timeout/10] seconds</b>"))
 
 			else
 				if(!delay_end)
-					to_world("<span class='notice'><b>Restarting in [restart_timeout/10] seconds</b></span>")
+					to_world(SPAN_NOTICE("<b>Restarting in [restart_timeout/10] seconds</b>"))
 			handle_tickets()
 		if(END_GAME_ENDING)
 			restart_timeout -= (world.time - last_fire)
@@ -232,21 +307,21 @@ Helpers
 		return
 
 	//Find the relevant datum, resolving secret in the process.
-	var/list/base_runnable_modes = config.get_runnable_modes() //format: list(config_tag = weight)
+	var/list/base_runnable_modes = get_runnable_modes() //format: list(config_tag = weight)
 	if (mode_to_try=="secret")
 		var/list/runnable_modes = base_runnable_modes - bad_modes
 		if(secret_force_mode != "secret") // Config option to force secret to be a specific mode.
-			mode_datum = config.pick_mode(secret_force_mode)
+			mode_datum = pick_mode(secret_force_mode)
 		else if(!length(runnable_modes))  // Indicates major issues; will be handled on return.
 			bad_modes += mode_to_try
 			log_debug("Could not start game mode [mode_to_try] - No runnable modes available to start, or all options listed under bad modes.")
 			return
 		else
-			mode_datum = config.pick_mode(pickweight(runnable_modes))
+			mode_datum = pick_mode(pickweight(runnable_modes))
 			if(length(runnable_modes) > 1) // More to pick if we fail; we won't tell anyone we failed unless we fail all possibilities, though.
 				. = CHOOSE_GAMEMODE_SILENT_REDO
 	else
-		mode_datum = config.pick_mode(mode_to_try)
+		mode_datum = pick_mode(mode_to_try)
 	if(!istype(mode_datum))
 		bad_modes += mode_to_try
 		log_debug("Could not find a valid game mode for [mode_to_try].")
@@ -274,7 +349,7 @@ Helpers
 		to_world("<B>The current game mode is Secret!</B>")
 		var/list/mode_names = list()
 		for (var/mode_tag in base_runnable_modes)
-			var/datum/game_mode/M = config.gamemode_cache[mode_tag]
+			var/datum/game_mode/M = mode_cache[mode_tag]
 			if(M)
 				mode_names += M.name
 		if (config.secret_hide_possibilities)
@@ -337,7 +412,7 @@ Helpers
 			if(!istype(M,/mob/new_player))
 				to_chat(M, "Captainship not forced on anyone.")
 
-/datum/controller/subsystem/ticker/proc/attempt_late_antag_spawn(var/list/antag_choices)
+/datum/controller/subsystem/ticker/proc/attempt_late_antag_spawn(list/antag_choices)
 	var/datum/antagonist/antag = antag_choices[1]
 	while(antag_choices.len && antag)
 		var/needs_ghost = antag.flags & (ANTAG_OVERRIDE_JOB | ANTAG_OVERRIDE_MOB)
@@ -389,7 +464,7 @@ Helpers
 	if(config.continous_rounds)
 		return evacuation_controller.round_over() || mode.station_was_nuked
 	else
-		return mode.check_finished() || (evacuation_controller.round_over() && evacuation_controller.emergency_evacuation) || universe_has_ended
+		return mode.check_finished() || (evacuation_controller.round_over() && evacuation_controller.emergency_evacuation) || game_over
 
 /datum/controller/subsystem/ticker/proc/mode_finished()
 	if (forced_end)
@@ -402,18 +477,18 @@ Helpers
 
 /datum/controller/subsystem/ticker/proc/notify_delay()
 	if(!delay_notified)
-		to_world("<span class='notice'><b>An admin has delayed the round end</b></span>")
+		to_world(SPAN_NOTICE("<b>An admin has delayed the round end</b>"))
 	delay_notified = 1
 
 /datum/controller/subsystem/ticker/proc/handle_tickets()
 	for(var/datum/ticket/ticket in tickets)
 		if(ticket.is_active())
 			if(!delay_notified)
-				message_staff("<span class='warning'><b>Automatically delaying restart due to active tickets.</b></span>")
+				message_staff(SPAN_WARNING("<b>Automatically delaying restart due to active tickets.</b>"))
 			notify_delay()
 			end_game_state = END_GAME_AWAITING_TICKETS
 			return
-	message_staff("<span class='warning'><b>No active tickets remaining, restarting in [restart_timeout/10] seconds if an admin has not delayed the round end.</b></span>")
+	message_staff(SPAN_WARNING("<b>No active tickets remaining, restarting in [restart_timeout/10] seconds if an admin has not delayed the round end.</b>"))
 	end_game_state = END_GAME_ENDING
 
 /datum/controller/subsystem/ticker/proc/declare_completion()
@@ -467,8 +542,8 @@ Helpers
 				max_profit = D
 			if(saldo <= max_loss.get_balance())
 				max_loss = D
-		to_world("<b>[max_profit.owner_name]</b> received most <font color='green'><B>PROFIT</B></font> today, with net profit of <b>[GLOB.using_map.local_currency_name_short][max_profit.get_balance()]</b>.")
-		to_world("On the other hand, <b>[max_loss.owner_name]</b> had most <font color='red'><B>LOSS</B></font>, with total loss of <b>[GLOB.using_map.local_currency_name_short][max_loss.get_balance()]</b>.")
+		to_world("<b>[max_profit.owner_name]</b> received most [SPAN_COLOR("green", "<B>PROFIT</B>")] today, with net profit of <b>[GLOB.using_map.local_currency_name_short][max_profit.get_balance()]</b>.")
+		to_world("On the other hand, <b>[max_loss.owner_name]</b> had most [SPAN_COLOR("red", "<B>LOSS</B>")], with total loss of <b>[GLOB.using_map.local_currency_name_short][max_loss.get_balance()]</b>.")
 
 	mode.declare_completion()//To declare normal completion.
 

@@ -3,7 +3,7 @@
 	icon = 'icons/obj/machines/research.dmi'
 	icon_state = "server"
 	base_type = /obj/machinery/r_n_d/server
-	construct_state = /decl/machine_construction/default/panel_closed
+	construct_state = /singleton/machine_construction/default/panel_closed
 	machine_name = "\improper R&D server"
 	machine_desc = "A powerful piece of hardware used as the hub of a research matrix, containing every byte of data gleaned from an experiment."
 	var/datum/research/files
@@ -69,7 +69,7 @@
 	if(!use_power)
 		return
 
-	if(!(stat & (NOPOWER|BROKEN))) //Blatently stolen from telecoms
+	if(operable()) //Blatently stolen from telecoms
 		var/turf/simulated/L = loc
 		if(istype(L))
 			var/datum/gas_mixture/env = L.return_air()
@@ -129,7 +129,7 @@
 
 /obj/machinery/computer/rdservercontrol/CanUseTopic(user)
 	if(!allowed(user) && !emagged)
-		to_chat(user, "<span class='warning'>You do not have the required access level</span>")
+		to_chat(user, SPAN_WARNING("You do not have the required access level"))
 		return STATUS_CLOSE
 	return ..()
 
@@ -261,12 +261,12 @@
 	onclose(user, "server_control")
 	return
 
-/obj/machinery/computer/rdservercontrol/emag_act(var/remaining_charges, var/mob/user)
+/obj/machinery/computer/rdservercontrol/emag_act(remaining_charges, mob/user)
 	if(!emagged)
 		playsound(src.loc, 'sound/effects/sparks4.ogg', 75, 1)
 		emagged = TRUE
 		req_access.Cut()
-		to_chat(user, "<span class='notice'>You you disable the security protocols.</span>")
+		to_chat(user, SPAN_NOTICE("You you disable the security protocols."))
 		src.updateUsrDialog()
 		return 1
 

@@ -24,8 +24,8 @@
 	var/list/lobby_players = SSticker.lobby_players()
 	log_debug("MODE VOTE: Lobby Players: [lobby_players.len]")
 	var/list/skipped = list()
-	for (var/tag in config.votable_modes)
-		var/datum/game_mode/mode = config.gamemode_cache[tag]
+	for (var/tag in SSticker.votable_modes)
+		var/datum/game_mode/mode = SSticker.mode_cache[tag]
 		var/cause = mode.check_votable(lobby_players)
 		if (cause)
 			skipped[tag] = cause
@@ -33,7 +33,7 @@
 		choices += tag
 	log_debug("MODE VOTE: Non-Votable Modes: [json_encode(skipped)]")
 	for (var/tag in choices)
-		var/datum/game_mode/mode = config.gamemode_cache[tag]
+		var/datum/game_mode/mode = SSticker.mode_cache[tag]
 		var/text = " / <span style='color:red;font-weight:bold'>[mode.required_enemies]</span>"
 		additional_text[tag] = "<td align='center'><span style='font-weight:bold'>[mode.required_players]</span> [text]</td>"
 		display_choices[tag] = capitalize(mode.name)
@@ -52,7 +52,7 @@
 /datum/vote/gamemode/report_result()
 	if(!SSticker.round_progressing) //Unpause any holds. If the vote failed, SSticker is responsible for fielding the result.
 		SSticker.round_progressing = 1
-		to_world("<font color='red'><b>The round will start soon.</b></font>")
+		to_world(SPAN_COLOR("red", "<b>The round will start soon.</b>"))
 	if(..())
 		SSticker.gamemode_vote_results = list() //This signals to SSticker that the vote is over but there were no winners.
 		return 1

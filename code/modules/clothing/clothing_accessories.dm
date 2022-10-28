@@ -25,7 +25,7 @@
 
 		if (ishuman(loc))
 			var/mob/living/carbon/human/H = loc
-			if (src != H.l_hand && src != H.r_hand)
+			if (!H.IsHolding(src))
 				for (var/obj/item/clothing/C in H.get_equipped_items())
 					if ((C != src) && (C.get_bulky_coverage() & bulky))
 						if (user)
@@ -41,7 +41,7 @@
 		return
 	..()
 
-/obj/item/clothing/attack_hand(var/mob/user)
+/obj/item/clothing/attack_hand(mob/user)
 	//only forward to the attached accessory if the clothing is equipped (not in a storage)
 	if(accessories.len && src.loc == user)
 		for(var/obj/item/clothing/accessory/A in accessories)
@@ -49,7 +49,7 @@
 		return
 	return ..()
 
-/obj/item/clothing/MouseDrop(var/obj/over_object)
+/obj/item/clothing/MouseDrop(obj/over_object)
 	if (!over_object || !(ishuman(usr) || issmall(usr)))
 		return
 
@@ -60,14 +60,13 @@
 	if (usr.incapacitated())
 		return
 
-	if (!usr.unEquip(src))
-		return
-
 	switch(over_object.name)
 		if("r_hand")
-			usr.put_in_r_hand(src)
+			if (usr.unEquip(src))
+				usr.put_in_r_hand(src)
 		if("l_hand")
-			usr.put_in_l_hand(src)
+			if (usr.unEquip(src))
+				usr.put_in_l_hand(src)
 	src.add_fingerprint(usr)
 
 /obj/item/clothing/examine(mob/user)
@@ -77,14 +76,14 @@
 			to_chat(user, "[icon2html(A, user)] \A [A] is attached to it.")
 	switch(ironed_state)
 		if(WRINKLES_WRINKLY)
-			to_chat(user, "<span class='bad'>It's wrinkly.</span>")
+			to_chat(user, SPAN_BAD("It's wrinkly."))
 		if(WRINKLES_NONE)
-			to_chat(user, "<span class='notice'>It's completely wrinkle-free!</span>")
+			to_chat(user, SPAN_NOTICE("It's completely wrinkle-free!"))
 	switch(smell_state)
 		if(SMELL_CLEAN)
-			to_chat(user, "<span class='notice'>It smells clean!</span>")
+			to_chat(user, SPAN_NOTICE("It smells clean!"))
 		if(SMELL_STINKY)
-			to_chat(user, "<span class='bad'>It's quite stinky!</span>")
+			to_chat(user, SPAN_BAD("It's quite stinky!"))
 
 
 /obj/item/clothing/proc/update_accessory_slowdown()

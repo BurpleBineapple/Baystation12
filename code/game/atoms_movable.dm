@@ -1,8 +1,9 @@
 /atom/movable
 	layer = OBJ_LAYER
 
-	appearance_flags = DEFAULT_APPEARANCE_FLAGS | TILE_BOUND
 	glide_size = 6
+
+	animate_movement = SLIDE_STEPS
 
 	var/waterproof = TRUE
 	var/movable_flags
@@ -20,6 +21,12 @@
 	var/mob/pulledby = null
 	var/item_state = null // Used to specify the item state for the on-mob overlays.
 	var/does_spin = TRUE // Does the atom spin when thrown (of course it does :P)
+
+	/// The icon width this movable expects to have by default.
+	var/icon_width = 32
+
+	/// The icon height this movable expects to have by default.
+	var/icon_height = 32
 
 
 /atom/movable/Initialize()
@@ -47,7 +54,7 @@
 		virtual_mob = null
 	return ..()
 
-/atom/movable/Bump(var/atom/A, yes)
+/atom/movable/Bump(atom/A, yes)
 	if(!QDELETED(throwing))
 		throwing.hit_atom(A)
 
@@ -123,7 +130,7 @@
 				L.source_atom.update_light()
 
 //called when src is thrown into hit_atom
-/atom/movable/proc/throw_impact(atom/hit_atom, var/datum/thrownthing/TT)
+/atom/movable/proc/throw_impact(atom/hit_atom, datum/thrownthing/TT)
 	if(istype(hit_atom,/mob/living))
 		var/mob/living/M = hit_atom
 		M.hitby(src,TT)
@@ -154,8 +161,6 @@
 		SpinAnimation(4,1)
 
 	SSthrowing.processing[src] = TT
-	if (SSthrowing.state == SS_PAUSED && length(SSthrowing.currentrun))
-		SSthrowing.currentrun[src] = TT
 
 //Overlays
 /atom/movable/overlay

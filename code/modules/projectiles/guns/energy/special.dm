@@ -17,9 +17,6 @@
 	wielded_item_state = "ionrifle-wielded"
 	combustion = 0
 
-/obj/item/gun/energy/ionrifle/emp_act(severity)
-	..(max(severity, 2)) //so it doesn't EMP itself, I guess
-
 /obj/item/gun/energy/ionrifle/small
 	name = "ion pistol"
 	desc = "The NT Mk72 EW Preston is a personal defense weapon designed to disable mechanical threats."
@@ -58,7 +55,7 @@
 	origin_tech = list(TECH_MATERIAL = 2, TECH_BIO = 3, TECH_POWER = 3)
 	modifystate = "floramut"
 	self_recharge = 1
-	var/decl/plantgene/gene = null
+	var/singleton/plantgene/gene = null
 	combustion = 0
 
 	firemodes = list(
@@ -75,7 +72,7 @@
 /obj/item/gun/energy/floragun/afterattack(obj/target, mob/user, adjacent_flag)
 	//allow shooting into adjacent hydrotrays regardless of intent
 	if(adjacent_flag && istype(target,/obj/machinery/portable_atmospherics/hydroponics))
-		user.visible_message("<span class='danger'>\The [user] fires \the [src] into \the [target]!</span>")
+		user.visible_message(SPAN_DANGER("\The [user] fires \the [src] into \the [target]!"))
 		Fire(target,user)
 		return
 	..()
@@ -92,7 +89,7 @@
 
 	gene = SSplants.plant_gene_datums[genemask]
 
-	to_chat(usr, "<span class='info'>You set the [src]'s targeted genetic area to [genemask].</span>")
+	to_chat(usr, SPAN_INFO("You set the [src]'s targeted genetic area to [genemask]."))
 
 	return
 
@@ -177,7 +174,7 @@
 	QDEL_NULL(spark_system)
 	return ..()
 
-/obj/item/gun/energy/plasmacutter/proc/slice(var/mob/M = null)
+/obj/item/gun/energy/plasmacutter/proc/slice(mob/M = null)
 	if(!safety())
 		if(M)
 			M.welding_eyecheck()//Welding tool eye check

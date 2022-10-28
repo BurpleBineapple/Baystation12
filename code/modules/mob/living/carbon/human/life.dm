@@ -94,7 +94,7 @@
 /mob/living/carbon/human/get_stamina()
 	return stamina
 
-/mob/living/carbon/human/adjust_stamina(var/amt)
+/mob/living/carbon/human/adjust_stamina(amt)
 	var/last_stamina = stamina
 	if(stat == DEAD)
 		stamina = 0
@@ -112,7 +112,7 @@
 		var/mod = (lying + (nutrition / initial(nutrition))) / 2
 		adjust_stamina(max(config.minimum_stamina_recovery, config.maximum_stamina_recovery * mod) * (1+chem_effects[CE_ENERGETIC]))
 
-/mob/living/carbon/human/set_stat(var/new_stat)
+/mob/living/carbon/human/set_stat(new_stat)
 	var/old_stat = stat
 	. = ..()
 	if(stat)
@@ -156,7 +156,7 @@
 	return pressure_adjustment_coefficient
 
 // Calculate how much of the environment pressure-difference affects the human.
-/mob/living/carbon/human/calculate_affecting_pressure(var/pressure)
+/mob/living/carbon/human/calculate_affecting_pressure(pressure)
 	var/pressure_difference
 
 	// First get the absolute pressure difference.
@@ -227,10 +227,10 @@
 	radiation = clamp(radiation,0,500)
 
 	if(!radiation)
-		if(species.appearance_flags & RADIATION_GLOWS)
+		if(species.appearance_flags & SPECIES_APPEARANCE_RADIATION_GLOWS)
 			set_light(0)
 	else
-		if(species.appearance_flags & RADIATION_GLOWS)
+		if(species.appearance_flags & SPECIES_APPEARANCE_RADIATION_GLOWS)
 			set_light(0.3, 0.1, max(1,min(20,radiation/20)), 2, species.get_flesh_colour(src))
 		// END DOGSHIT SNOWFLAKE
 
@@ -257,15 +257,15 @@
 			if(!isSynthetic())
 				if(prob(5) && prob(100 * RADIATION_SPEED_COEFFICIENT))
 					radiation -= 5 * RADIATION_SPEED_COEFFICIENT
-					to_chat(src, "<span class='warning'>You feel weak.</span>")
+					to_chat(src, SPAN_WARNING("You feel weak."))
 					Weaken(3)
 					if(!lying)
 						emote("collapse")
 				if(prob(5) && prob(100 * RADIATION_SPEED_COEFFICIENT) && species.get_bodytype(src) == SPECIES_HUMAN) //apes go bald
-					if((h_style != "Bald" || f_style != "Shaved" ))
-						to_chat(src, "<span class='warning'>Your hair falls out.</span>")
-						h_style = "Bald"
-						f_style = "Shaved"
+					if((head_hair_style != "Bald" || facial_hair_style != "Shaved" ))
+						to_chat(src, SPAN_WARNING("Your hair falls out."))
+						head_hair_style = "Bald"
+						facial_hair_style = "Shaved"
 						update_hair()
 
 		if (radiation > 75)
@@ -275,7 +275,7 @@
 				if(prob(5))
 					take_overall_damage(0, 5 * RADIATION_SPEED_COEFFICIENT, used_weapon = "Radiation Burns")
 				if(prob(1))
-					to_chat(src, "<span class='warning'>You feel strange!</span>")
+					to_chat(src, SPAN_WARNING("You feel strange!"))
 					adjustCloneLoss(5 * RADIATION_SPEED_COEFFICIENT)
 					emote("gasp")
 		if(radiation > 150)
@@ -293,7 +293,7 @@
 
 	/** breathing **/
 
-/mob/living/carbon/human/handle_chemical_smoke(var/datum/gas_mixture/environment)
+/mob/living/carbon/human/handle_chemical_smoke(datum/gas_mixture/environment)
 	if(wear_mask && (wear_mask.item_flags & ITEM_FLAG_BLOCK_GAS_SMOKE_EFFECT))
 		return
 	if(glasses && (glasses.item_flags & ITEM_FLAG_BLOCK_GAS_SMOKE_EFFECT))
@@ -311,7 +311,7 @@
 			if(!rig.offline && (rig.air_supply && internal == rig.air_supply))
 				rig_supply = rig.air_supply
 
-		if (!rig_supply && (!list_find(contents, internal) || !((wear_mask && (wear_mask.item_flags & ITEM_FLAG_AIRTIGHT)) || (head && (head.item_flags & ITEM_FLAG_AIRTIGHT)))))
+		if (!rig_supply && (!contents.Find(internal) || !((wear_mask && (wear_mask.item_flags & ITEM_FLAG_AIRTIGHT)) || (head && (head.item_flags & ITEM_FLAG_AIRTIGHT)))))
 			set_internals(null)
 
 		if(internal)
@@ -512,7 +512,7 @@
 	var/thermal_protection_flags = get_cold_protection_flags(temperature)
 	return get_thermal_protection(thermal_protection_flags)
 
-/mob/living/carbon/human/proc/get_thermal_protection(var/flags)
+/mob/living/carbon/human/proc/get_thermal_protection(flags)
 	.=0
 	if(flags)
 		if(flags & HEAD)
@@ -604,7 +604,7 @@
 			if(stat || status_flags & FAKEDEATH)
 				return
 			else
-				to_chat(src, "<span class='warning'>[species.halloss_message_self]</span>")
+				to_chat(src, SPAN_WARNING("[species.halloss_message_self]"))
 				src.visible_message("<B>[src]</B> [species.halloss_message]")
 			Paralyse(10)
 
@@ -651,7 +651,7 @@
 				var/zzzchance = min(5, 5*drowsyness/30)
 				if((prob(zzzchance) || drowsyness >= 60))
 					if(stat == CONSCIOUS)
-						to_chat(src, "<span class='notice'>You are about to fall asleep...</span>")
+						to_chat(src, SPAN_NOTICE("You are about to fall asleep..."))
 					Sleeping(5)
 
 		// If you're dirty, your gloves will become dirty, too.
@@ -674,7 +674,7 @@
 		if(stasis_value > 1 && drowsyness < stasis_value * 4)
 			drowsyness += min(stasis_value, 3)
 			if(!stat && prob(1))
-				to_chat(src, "<span class='notice'>You feel slow and sluggish...</span>")
+				to_chat(src, SPAN_NOTICE("You feel slow and sluggish..."))
 
 	return 1
 
@@ -879,10 +879,10 @@
 			playsound_local(src,pick(GLOB.scarySounds),50, 1, -1)
 
 	var/area/A = get_area(src)
-	if(client && world.time >= client.played + 600)
+	if(client && world.time >= client.next_ambience_time + 5 MINUTES)
 		A.play_ambience(src)
 	if(stat == UNCONSCIOUS && world.time - l_move_time < 5 && prob(10))
-		to_chat(src,"<span class='notice'>You feel like you're [pick("moving","flying","floating","falling","hovering")].</span>")
+		to_chat(src,SPAN_NOTICE("You feel like you're [pick("moving","flying","floating","falling","hovering")]."))
 
 /mob/living/carbon/human/proc/handle_changeling()
 	if(mind && mind.changeling)

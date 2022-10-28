@@ -2,7 +2,7 @@
 #define STEALTH_MANUAL 1
 #define STEALTH_AUTO 2
 
-var/list/admin_datums = list()
+var/global/list/admin_datums = list()
 
 /datum/admins
 	var/rank         = "Temporary Admin"
@@ -63,7 +63,7 @@ if rights_required == 0, then it simply checks if they are an admin.
 if it doesn't return 1 and show_msg=1 it will prints a message explaining why the check has failed
 generally it would be used like so:
 
-proc/admin_proc()
+/proc/admin_proc()
 	if(!check_rights(R_ADMIN)) return
 	to_chat(usr, "you have enough rights!")
 
@@ -94,7 +94,7 @@ NOTE: It checks usr by default. Supply the "user" argument if you wish to check 
 			if(usr.client.holder.rights != other.holder.rights)
 				if( (usr.client.holder.rights & other.holder.rights) == other.holder.rights )
 					return 1	//we have all the rights they have and more
-		to_chat(usr, "<font color='red'>Error: Cannot proceed. They have more or equal rights to us.</font>")
+		to_chat(usr, SPAN_COLOR("red", "Error: Cannot proceed. They have more or equal rights to us."))
 	return 0
 
 /client/proc/deadmin()
@@ -134,14 +134,14 @@ NOTE: It checks usr by default. Supply the "user" argument if you wish to check 
 	set name = "Stealth Mode"
 
 	if(!holder)
-		to_chat(src, "<span class='warning'>Error: You are not an admin.</span>")
+		to_chat(src, SPAN_WARNING("Error: You are not an admin."))
 		return
 
 	holder.stealthy_ = holder.stealthy_ == STEALTH_OFF ? STEALTH_MANUAL : STEALTH_OFF
 	if(holder.stealthy_)
-		to_chat(src, "<span class='notice'>You are now stealthed.</span>")
+		to_chat(src, SPAN_NOTICE("You are now stealthed."))
 	else
-		to_chat(src, "<span class='notice'>You are no longer stealthed.</span>")
+		to_chat(src, SPAN_NOTICE("You are no longer stealthed."))
 	log_and_message_admins("has turned stealth mode [holder.stealthy_ ? "ON" : "OFF"]")
 
 #undef STEALTH_OFF

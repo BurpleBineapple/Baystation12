@@ -7,11 +7,11 @@
 /atom/get_view_variables_header()
 	return {"
 		<a href='?_src_=vars;datumedit=\ref[src];varnameedit=name'><b>[src]</b></a>
-		<br><font size='1'>
+		<br><span style='font-size: 10px'>
 		<a href='?_src_=vars;rotatedatum=\ref[src];rotatedir=left'><=</a>
 		<a href='?_src_=vars;datumedit=\ref[src];varnameedit=dir'>[dir2text(dir)]</a>
 		<a href='?_src_=vars;rotatedatum=\ref[src];rotatedir=right'>=></a>
-		</font>
+		</span>
 		"}
 
 /atom/movable/get_view_variables_options()
@@ -22,7 +22,7 @@
 
 /mob/living/get_view_variables_header()
 	return {"
-		<a href='?_src_=vars;rename=\ref[src]'><b>[src]</b></a><font size='1'>
+		<a href='?_src_=vars;rename=\ref[src]'><b>[src]</b></a><span style='font-size: 10px'>
 		<br><a href='?_src_=vars;rotatedatum=\ref[src];rotatedir=left'><=</a> <a href='?_src_=vars;datumedit=\ref[src];varnameedit=dir'>[dir2text(dir)]</a> <a href='?_src_=vars;rotatedatum=\ref[src];rotatedir=right'>=></a>
 		<br><a href='?_src_=vars;datumedit=\ref[src];varnameedit=ckey'>[ckey ? ckey : "No ckey"]</a> / <a href='?_src_=vars;datumedit=\ref[src];varnameedit=real_name'>[real_name ? real_name : "No real name"]</a>
 		<br>
@@ -32,7 +32,7 @@
 		OXY:<a href='?_src_=vars;mobToDamage=\ref[src];adjustDamage=oxygen'>[getOxyLoss()]</a>
 		CLONE:<a href='?_src_=vars;mobToDamage=\ref[src];adjustDamage=clone'>[getCloneLoss()]</a>
 		BRAIN:<a href='?_src_=vars;mobToDamage=\ref[src];adjustDamage=brain'>[getBrainLoss()]</a>
-		</font>
+		</span>
 		"}
 
 // Same for these as for get_view_variables_header() above
@@ -102,7 +102,10 @@
 		"}
 
 /datum/proc/get_variables()
-	. = vars - VV_hidden()
+	var/list/hidden = VV_hidden()
+	if (!hidden)
+		return list()
+	. = vars - hidden
 	if(!usr || !check_rights(R_ADMIN|R_DEBUG, FALSE))
 		. -= VV_secluded()
 
@@ -115,7 +118,7 @@
 /datum/proc/get_initial_variable_value(varname)
 	return initial(vars[varname])
 
-/datum/proc/make_view_variables_variable_entry(var/varname, var/value, var/hide_watch = 0)
+/datum/proc/make_view_variables_variable_entry(varname, value, hide_watch = 0)
 	return {"
 			(<a href='?_src_=vars;datumedit=\ref[src];varnameedit=[varname]'>E</a>)
 			(<a href='?_src_=vars;datumchange=\ref[src];varnamechange=[varname]'>C</a>)
@@ -124,7 +127,7 @@
 			"}
 
 // No mass editing of clients
-/client/make_view_variables_variable_entry(var/varname, var/value, var/hide_watch = 0)
+/client/make_view_variables_variable_entry(varname, value, hide_watch = 0)
 	return {"
 			(<a href='?_src_=vars;datumedit=\ref[src];varnameedit=[varname]'>E</a>)
 			(<a href='?_src_=vars;datumchange=\ref[src];varnamechange=[varname]'>C</a>)
@@ -133,7 +136,7 @@
 
 // These methods are all procs and don't use stored lists to avoid VV exploits
 
-// The following vars cannot be viewed by anyone
+// The following vars cannot be viewed by anyone or, if null, no variables can be viewed.
 /datum/proc/VV_hidden()
 	return list()
 
@@ -141,12 +144,14 @@
 /datum/proc/VV_secluded()
 	return list()
 
-/configuration/VV_secluded()
+/datum/configuration/VV_secluded()
 	return vars
+
 
 // The following vars cannot be edited by anyone
 /datum/proc/VV_static()
-	return list("parent_type")
+	return list("parent_type", "gc_destroyed", "is_processing")
+
 
 /atom/VV_static()
 	return ..() + list("bound_x", "bound_y", "bound_height", "bound_width", "bounds", "step_x", "step_y", "step_size")
@@ -184,11 +189,11 @@
 /client/VV_ckey_edit()
 	return list("key", "ckey")
 
-/datum/proc/may_edit_var(var/user, var/var_to_edit)
+/datum/proc/may_edit_var(user, var_to_edit)
 	if(!user)
 		return FALSE
 	if(!(var_to_edit in vars))
-		to_chat(user, "<span class='warning'>\The [src] does not have a var '[var_to_edit]'</span>")
+		to_chat(user, SPAN_WARNING("\The [src] does not have a var '[var_to_edit]'"))
 		return FALSE
 	if(var_to_edit in VV_static())
 		return FALSE

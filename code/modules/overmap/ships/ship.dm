@@ -1,4 +1,4 @@
-var/const/OVERMAP_SPEED_CONSTANT = (1 SECOND)
+var/global/const/OVERMAP_SPEED_CONSTANT = (1 SECOND)
 #define SHIP_MOVE_RESOLUTION 0.00001
 #define MOVING(speed) abs(speed) >= min_speed
 #define SANITIZE_SPEED(speed) SIGN(speed) * clamp(abs(speed), 0, max_speed)
@@ -249,7 +249,7 @@ var/const/OVERMAP_SPEED_CONSTANT = (1 SECOND)
 	if(!SSshuttle.overmap_halted)
 		halted = 0
 
-/obj/effect/overmap/visitable/ship/Bump(var/atom/A)
+/obj/effect/overmap/visitable/ship/Bump(atom/A)
 	if(istype(A,/turf/unsimulated/map/edge))
 		handle_wraparound()
 	..()

@@ -24,7 +24,7 @@
 	for(var/R in cures)
 		if(H.reagents.has_reagent(R))
 			if (cure_message)
-				to_chat(H, "<span class='notice'>[cure_message]</span>")
+				to_chat(H, SPAN_NOTICE("[cure_message]"))
 			return 1
 	return 0
 
@@ -139,7 +139,7 @@
 // ====
 /datum/medical_effect/itch
 	name = "Itch"
-	triggers = list(/datum/reagent/space_drugs = 10)
+	triggers = list(/datum/reagent/drugs/hextro = 10)
 	cures = list(/datum/reagent/inaprovaline)
 	cure_message = "The itching stops..."
 
