@@ -201,6 +201,7 @@ var/global/datum/controller/master/Master = new
 	initializing = FALSE
 
 	if (!current_runlevel)
+		sound_to(world, sound('sound/ui/lobby-notify.ogg', volume = 40))
 		SetRunLevel(RUNLEVEL_LOBBY)
 
 	// Sort subsystems by display setting for easy access.
